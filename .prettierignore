@@ -1,0 +1,7 @@
+**/node_modules/
+.serverless
+.vscode
+/lib/
+tsconfig*.json
+typings
+static/js

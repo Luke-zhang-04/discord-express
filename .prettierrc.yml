@@ -1,0 +1,50 @@
+arrowParens: "always"
+bracketSpacing: false
+embeddedLanguageFormatting: "auto"
+endOfLine: "lf"
+htmlWhitespaceSensitivity: "strict"
+bracketSameLine: false
+jsxSingleQuote: false
+printWidth: 99
+quoteProps: "as-needed"
+semi: false
+singleQuote: false
+tabWidth: 4
+trailingComma: "all"
+useTabs: false
+
+# JSDoc plugin
+jsdocSpaces: 1
+jsdocDescriptionWithDot: false
+jsdocDescriptionTag: false
+jsdocVerticalAlignment: false
+jsdocKeepUnParseAbleExampleIndent: false
+jsdocSingleLineComment: false
+jsdocSeparateReturnsFromParam: false
+tsdoc: true
+
+# Sh plugin
+keepComments: true
+indent: 4
+binaryNextLine: true
+switchCaseIndent: true
+spaceRedirects: true
+keepPadding: false
+minify: false
+functionNextLine: true
+
+plugins:
+  - ./node_modules/prettier-plugin-jsdoc
+  - ./node_modules/prettier-plugin-package
+
+overrides:
+  - files:
+      - "*.html"
+      - "*.yml"
+      - "*.yaml"
+      - "*.json"
+      - "*.css"
+      - "*.scss"
+      - "*.prisma"
+    options:
+      tabWidth: 2
