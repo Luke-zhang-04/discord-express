@@ -6,7 +6,7 @@ import {
     type APIApplicationCommandBasicOption,
     APIApplicationCommandChannelOption,
     APIApplicationCommandSubcommandGroupOption,
-} from "discord-api-types"
+} from "discord-api-types/v9"
 
 export enum OptionTypes {
     String = 3,
@@ -335,7 +335,7 @@ const resolveSubCommandGroups = ({
         }),
     )
 
-export const createDiscordApiCommands = (
+export const createCommands = (
     commands: Commands,
 ): RESTPostAPIApplicationCommandsJSONBody[] =>
     Object.entries(commands).map(([name, command]): RESTPostAPIApplicationCommandsJSONBody => {
@@ -362,3 +362,5 @@ export const createDiscordApiCommands = (
             options: resolveCommandOptions(command.options),
         }
     })
+
+export default createCommands
