@@ -5,6 +5,7 @@
   "license": "BSD-3-Clause",
   "author": "",
   "main": "lib/index.js",
+  "type": "module",
   "scripts": {},
   "keywords": [],
   "peerDependencies": {
@@ -22,7 +23,7 @@
   "dependencies": {
     "@discordjs/builders": "^0.11.0",
     "@discordjs/rest": "^0.2.0-canary.0",
-    "@luke-zhang-04/utils": "github:luke-zhang-04/utils#semver:^1.7.0",
+    "@luke-zhang-04/utils": "github:luke-zhang-04/utils#semver:^1.7.1",
     "discord-api-types": "^0.26.1"
   },
   "devDependencies": {

@@ -19,7 +19,7 @@ jsdocDescriptionWithDot: false
 jsdocDescriptionTag: false
 jsdocVerticalAlignment: false
 jsdocKeepUnParseAbleExampleIndent: false
-jsdocSingleLineComment: false
+jsdocSingleLineComment: true
 jsdocSeparateReturnsFromParam: false
 tsdoc: true
 
