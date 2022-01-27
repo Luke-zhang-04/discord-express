@@ -1,9 +1,9 @@
 import * as discord from "discord.js"
 import {type RESTPostAPIApplicationCommandsJSONBody, Routes} from "discord-api-types/v9"
-import {REST} from "@discordjs/rest"
 import {DiscordExpressHandler} from "."
 import {createRequest} from "./request"
 import {createResponse} from "./response"
+import fetch from "node-fetch"
 
 export interface ClientOptions extends discord.ClientOptions {
     authToken?: string
@@ -15,7 +15,6 @@ type StackItem = {
 }
 
 export class Client<Ready extends boolean = boolean> extends discord.Client<Ready> {
-    private _discordjsRest: REST | undefined
     private _stack: StackItem[] = []
 
     public constructor({authToken, ...options}: ClientOptions) {
@@ -23,20 +22,10 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
 
         if (authToken) {
             this.login(authToken)
-            this._discordjsRest = new REST({version: "9"}).setToken(authToken)
         }
-    }
-
-    /** Get the @discordjs/rest REST instance */
-    public get discordJsRest(): REST | undefined {
-        return this._discordjsRest
     }
 
     public override async login(token?: string | undefined): Promise<string> {
-        if (token) {
-            this._discordjsRest = new REST({version: "9"}).setToken(token)
-        }
-
         return await super.login(token)
     }
 
@@ -51,12 +40,16 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
         commands: RESTPostAPIApplicationCommandsJSONBody[],
         clientId: string,
     ): Promise<unknown> {
-        if (!this._discordjsRest) {
+        if (!this.token) {
             throw new Error("Client not logged in")
         }
 
-        return await this._discordjsRest.put(Routes.applicationCommands(clientId), {
-            body: commands,
+        return await fetch(`https://discord.com/api/v9/${Routes.applicationCommands(clientId)}`, {
+            method: "PUT",
+            body: JSON.stringify(commands),
+            headers: {
+                Authorization: `Bot ${this.token}`,
+            },
         })
     }
 
