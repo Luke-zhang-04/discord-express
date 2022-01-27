@@ -1,12 +1,12 @@
-import {isObject, pick} from "@luke-zhang-04/utils"
 import {
+    type APIApplicationCommandBasicOption,
+    type APIApplicationCommandChannelOption,
+    type APIApplicationCommandSubcommandGroupOption,
     type APIApplicationCommandSubcommandOption,
     ApplicationCommandOptionType,
     type RESTPostAPIApplicationCommandsJSONBody,
-    type APIApplicationCommandBasicOption,
-    APIApplicationCommandChannelOption,
-    APIApplicationCommandSubcommandGroupOption,
 } from "discord-api-types/v9"
+import {isObject, pick} from "@luke-zhang-04/utils"
 
 export enum OptionTypes {
     String = 3,
@@ -150,10 +150,9 @@ export interface ChannelOption<Type extends ChannelOptionTypes = ChannelOptionTy
     channelTypes?: APIApplicationCommandChannelOption["channel_types"]
 }
 
-export interface OtherOption
-    extends Option<
-        Exclude<AllOptionTypes, NumericOptionTypes | StringOptionTypes | ChannelOptionTypes>
-    > {}
+export type OtherOption = Option<
+    Exclude<AllOptionTypes, NumericOptionTypes | StringOptionTypes | ChannelOptionTypes>
+>
 
 export interface Command {
     description: string
@@ -335,9 +334,7 @@ const resolveSubCommandGroups = ({
         }),
     )
 
-export const createCommands = (
-    commands: Commands,
-): RESTPostAPIApplicationCommandsJSONBody[] =>
+export const createCommands = (commands: Commands): RESTPostAPIApplicationCommandsJSONBody[] =>
     Object.entries(commands).map(([name, command]): RESTPostAPIApplicationCommandsJSONBody => {
         const commonAttributes = {
             name,
