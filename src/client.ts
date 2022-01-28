@@ -40,13 +40,23 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
             throw new Error("Client not logged in")
         }
 
-        return await fetch(`https://discord.com/api/v9/${Routes.applicationCommands(clientId)}`, {
-            method: "PUT",
-            body: JSON.stringify(commands),
-            headers: {
-                Authorization: `Bot ${this.token}`,
+        const response = await fetch(
+            `https://discord.com/api/v9/${Routes.applicationCommands(clientId)}`,
+            {
+                method: "PUT",
+                body: JSON.stringify(commands),
+                headers: {
+                    Authorization: `Bot ${this.token}`,
+                    "Content-Type": "application/json",
+                },
             },
-        })
+        )
+
+        if (!response.ok) {
+            throw new Error(await response.text())
+        }
+
+        return await response.json()
     }
 
     public use(...handlers: DiscordExpressHandler[]): void {

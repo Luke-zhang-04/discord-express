@@ -244,73 +244,75 @@ const resolveCommandOptions = (
 ): APIApplicationCommandBasicOption[] =>
     options === undefined
         ? []
-        : Object.entries(options).map(
-              ([
-                  name,
-                  {description, required: isRequired, ...option},
-              ]): APIApplicationCommandBasicOption => {
-                  const type = resolveOptionType(option.type)
-
-                  const commonAttributes = {
+        : Object.entries(options)
+              .map(
+                  ([
                       name,
-                      description,
-                      required: isRequired ?? false,
-                  }
+                      {description, required: isRequired, ...option},
+                  ]): APIApplicationCommandBasicOption => {
+                      const type = resolveOptionType(option.type)
 
-                  switch (type) {
-                      case ApplicationCommandOptionType.Integer:
-                          return {
-                              ...commonAttributes,
-                              type,
-                              ...pick(option as NumericOption, "autoComplete", "defaultValue"),
-                              min_value: (option as NumericOption).min,
-                              max_value: (option as NumericOption).max,
-                              choices: (option as NumericOption).choices?.map((val) =>
-                                  val instanceof Array
-                                      ? {name: val[0], value: val[1]}
-                                      : {name: val.toString(), value: val},
-                              ),
-                          }
+                      const commonAttributes = {
+                          name,
+                          description,
+                          required: isRequired ?? false,
+                      }
 
-                      // Can't combine these; typescript gets mad
-                      case ApplicationCommandOptionType.Number:
-                          return {
-                              ...commonAttributes,
-                              type,
-                              ...pick(option as NumericOption, "autoComplete", "defaultValue"),
-                              min_value: (option as NumericOption).min,
-                              max_value: (option as NumericOption).max,
-                              choices: (option as NumericOption).choices?.map((val) =>
-                                  val instanceof Array
-                                      ? {name: val[0], value: val[1]}
-                                      : {name: val.toString(), value: val},
-                              ),
-                          }
-                      case ApplicationCommandOptionType.String:
-                          return {
-                              ...commonAttributes,
-                              type,
-                              ...pick(option as StringOption, "autoComplete", "defaultValue"),
-                              choices: (option as StringOption).choices?.map((val) =>
-                                  val instanceof Array
-                                      ? {name: val[0], value: val[1]}
-                                      : {name: val, value: val},
-                              ),
-                          }
-                      case ApplicationCommandOptionType.Channel:
-                          return {
-                              ...commonAttributes,
-                              type,
-                              channel_types: (option as ChannelOption).channelTypes,
-                          }
-                      default:
-                          return {
-                              ...commonAttributes,
-                              type,
-                          }
-                  }
-              },
-          )
+                      switch (type) {
+                          case ApplicationCommandOptionType.Integer:
+                              return {
+                                  ...commonAttributes,
+                                  type,
+                                  ...pick(option as NumericOption, "autoComplete", "defaultValue"),
+                                  min_value: (option as NumericOption).min,
+                                  max_value: (option as NumericOption).max,
+                                  choices: (option as NumericOption).choices?.map((val) =>
+                                      val instanceof Array
+                                          ? {name: val[0], value: val[1]}
+                                          : {name: val.toString(), value: val},
+                                  ),
+                              }
+
+                          // Can't combine these; typescript gets mad
+                          case ApplicationCommandOptionType.Number:
+                              return {
+                                  ...commonAttributes,
+                                  type,
+                                  ...pick(option as NumericOption, "autoComplete", "defaultValue"),
+                                  min_value: (option as NumericOption).min,
+                                  max_value: (option as NumericOption).max,
+                                  choices: (option as NumericOption).choices?.map((val) =>
+                                      val instanceof Array
+                                          ? {name: val[0], value: val[1]}
+                                          : {name: val.toString(), value: val},
+                                  ),
+                              }
+                          case ApplicationCommandOptionType.String:
+                              return {
+                                  ...commonAttributes,
+                                  type,
+                                  ...pick(option as StringOption, "autoComplete", "defaultValue"),
+                                  choices: (option as StringOption).choices?.map((val) =>
+                                      val instanceof Array
+                                          ? {name: val[0], value: val[1]}
+                                          : {name: val, value: val},
+                                  ),
+                              }
+                          case ApplicationCommandOptionType.Channel:
+                              return {
+                                  ...commonAttributes,
+                                  type,
+                                  channel_types: (option as ChannelOption).channelTypes,
+                              }
+                          default:
+                              return {
+                                  ...commonAttributes,
+                                  type,
+                              }
+                      }
+                  },
+              )
+              .sort((first, second) => (first.required && !second.required ? -1 : 0))
 
 const resolveSubCommands = ({subCommands}: SubCommand): APIApplicationCommandSubcommandOption[] =>
     Object.entries(subCommands).map(
