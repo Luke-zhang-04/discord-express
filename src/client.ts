@@ -25,10 +25,6 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
         }
     }
 
-    public override async login(token?: string | undefined): Promise<string> {
-        return await super.login(token)
-    }
-
     /**
      * Register Application Commands (slash commands). You can use the SlashCommandBuilder class if
      * you prefer, or the implementation shipped with this library
@@ -66,7 +62,11 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
 
     public async applyStack(trigger: discord.Message | discord.Interaction): Promise<void> {
         if (trigger instanceof discord.Interaction) {
-            if (!trigger.isCommand()) {
+            if (!trigger.isCommand() || trigger.user.id === this.user?.id) {
+                return
+            }
+        } else {
+            if (trigger.author.id === this.user?.id) {
                 return
             }
         }
@@ -76,11 +76,11 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
         const request = createRequest(trigger)
         const response = createResponse(trigger)
 
-        const nextFunction = () => {
-            stackIter.next().value?.handler(request, response, nextFunction)
+        const nextFunction = async (): Promise<void> => {
+            await stackIter.next().value?.handler(request, response, nextFunction)
         }
 
-        nextFunction()
+        await nextFunction()
     }
 
     private *_getStack(): Generator<StackItem, undefined, StackItem> {
@@ -96,3 +96,5 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
         return
     }
 }
+
+export default Client
