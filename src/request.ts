@@ -2,7 +2,7 @@ import {
     type Client,
     type Guild,
     type GuildMember,
-    Interaction,
+    CommandInteraction,
     type InteractionType,
     Message,
     type MessageType,
@@ -24,6 +24,7 @@ export type BaseRequest = {
     guild: Guild | null
     guildId: string | null
     id: string
+    body: unknown
 }
 
 export type MessageRequest = BaseRequest & {
@@ -42,13 +43,13 @@ export type InteractionRequest = BaseRequest & {
     type: InteractionType
 
     message?: undefined
-    interaction?: Interaction
-    trigger: Interaction
+    interaction?: CommandInteraction
+    trigger: CommandInteraction
 }
 
 export type Request = MessageRequest | InteractionRequest
 
-export const createRequest = (trigger: Message | Interaction): Request => {
+export const createRequest = (trigger: Message | CommandInteraction): Request => {
     const commonAttributes = {
         appId: trigger.applicationId,
         ...pick(
@@ -76,6 +77,7 @@ export const createRequest = (trigger: Message | Interaction): Request => {
             message: trigger,
             interaction: undefined,
             trigger,
+            body: trigger.content,
         }
     }
 
@@ -90,5 +92,6 @@ export const createRequest = (trigger: Message | Interaction): Request => {
         message: undefined,
         interaction: trigger,
         trigger,
+        body: trigger.options.data,
     }
 }

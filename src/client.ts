@@ -70,8 +70,8 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
         this.on("interaction", this.applyStack)
     }
 
-    public async applyStack(trigger: discord.Message | discord.Interaction): Promise<void> {
-        if (trigger instanceof discord.Interaction) {
+    public async applyStack(trigger: discord.Message | discord.CommandInteraction): Promise<void> {
+        if (trigger instanceof discord.CommandInteraction) {
             if (!trigger.isCommand() || trigger.user.id === this.user?.id) {
                 return
             }
