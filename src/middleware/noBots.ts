@@ -1,12 +1,12 @@
 import {type DiscordExpressHandler} from ".."
 
-export interface NoBotsConfig {
+export interface NoBotsOptions {
     allowWebhooks?: boolean
 }
 
 /** NoBots makes sure commands aren't from bots */
 export const noBots =
-    ({allowWebhooks = false}: NoBotsConfig = {}): DiscordExpressHandler =>
+    ({allowWebhooks = false}: NoBotsOptions = {}): DiscordExpressHandler =>
     (request, _, next) => {
         if (
             request.author.bot ||

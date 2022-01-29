@@ -1,10 +1,12 @@
+import {type NoBotsOptions,noBots, } from "./noBots"
+import {type NoDMsOptions, noDMs} from "./noDMs"
 import {DiscordExpressHandler} from ".."
-import {noBots} from "./noBots"
-import {noDMs} from "./noDMs"
 
 interface RecommendedOptions {
     allowBots?: boolean
+    noBotsOptions?: NoBotsOptions
     allowDMs?: boolean
+    noDMsOptons?: NoDMsOptions
 }
 
 /**
@@ -27,18 +29,22 @@ interface RecommendedOptions {
  */
 export const recommended = ({
     allowBots = false,
+    noBotsOptions,
     allowDMs = false,
+    noDMsOptons,
 }: RecommendedOptions = {}): DiscordExpressHandler[] => {
     const middlewares: DiscordExpressHandler[] = []
 
     if (!allowBots) {
-        middlewares.push(noBots())
+        middlewares.push(noBots(noBotsOptions))
     }
     if (!allowDMs) {
-        middlewares.push(noDMs())
+        middlewares.push(noDMs(noDMsOptons))
     }
 
     return middlewares
 }
 
-export {noBots}
+export {noBots, noDMs}
+
+export {messageCommandParser} from "./messageCommandParser"

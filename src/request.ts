@@ -14,7 +14,19 @@ import {pick} from "@luke-zhang-04/utils"
 
 export type BaseRequest = {
     appId: string | null
+
+    /**
+     * Author of the request
+     *
+     * @alias user
+     */
     author: User
+
+    /**
+     * User who triggered the request
+     *
+     * @alias author
+     */
     user: User
     channel: TextBasedChannel | null
     channelId: string | null
@@ -24,7 +36,11 @@ export type BaseRequest = {
     guild: Guild | null
     guildId: string | null
     id: string
+    /** Arguments and options passed from the command */
     body: unknown
+    commandName?: string
+    /** Extra metadata that can be stored for any purpose */
+    metadata: {[key: string]: unknown}
 }
 
 export type MessageRequest = BaseRequest & {
@@ -34,6 +50,7 @@ export type MessageRequest = BaseRequest & {
 
     message?: Message
     interaction?: undefined
+    /** What triggered the command. In this case, it's a message */
     trigger: Message
 }
 
@@ -44,7 +61,9 @@ export type InteractionRequest = BaseRequest & {
 
     message?: undefined
     interaction?: CommandInteraction
+    /** What triggered the command. In this case, it's a command interaction */
     trigger: CommandInteraction
+    commandName: string
 }
 
 export type Request = MessageRequest | InteractionRequest
@@ -52,6 +71,7 @@ export type Request = MessageRequest | InteractionRequest
 export const createRequest = (trigger: Message | CommandInteraction): Request => {
     const commonAttributes = {
         appId: trigger.applicationId,
+        metadata: {},
         ...pick(
             trigger,
             "channel",
@@ -93,5 +113,6 @@ export const createRequest = (trigger: Message | CommandInteraction): Request =>
         interaction: trigger,
         trigger,
         body: trigger.options.data,
+        commandName: trigger.commandName,
     }
 }
