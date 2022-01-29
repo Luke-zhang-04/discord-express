@@ -1,9 +1,12 @@
 import {type DiscordExpressHandler} from ".."
-import stringArgv from "string-argv"
+import {parseArgsStringToArgv as stringArgv} from "string-argv"
 
 const escapeRegex = (str: string): string => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
-const parseArgs = (str: string): {[key: string]: unknown; _: string[]} | undefined => {
+const parseArgs = (
+    str: string,
+    RegexProvier: RegExpConstructor = RegExp,
+): {[key: string]: unknown; _: string[]} | undefined => {
     const argArray = stringArgv(str)
     const args: {[key: string]: unknown} = {}
     const positional = []
@@ -42,21 +45,27 @@ const parseArgs = (str: string): {[key: string]: unknown; _: string[]} | undefin
                 }
             }
 
-            currentFlag = arg.replace(/^-{1,2}/u, "")
+            currentFlag = arg.replace(new RegexProvier(/^-{1,2}/u), "")
             flagValues = []
 
-            const equalsMatch = currentFlag.match(/^(?<flag>[A-z1-2]+)\=(?<value>.*)/u)
+            const equalsMatch = currentFlag.match(
+                new RegexProvier(/^(?<flag>[A-z1-9]+)=(?<value>.*)/u),
+            )
 
             if (equalsMatch?.groups) {
                 if (equalsMatch.groups.flag) {
                     currentFlag = equalsMatch.groups.flag
                 }
                 if (equalsMatch.groups.value) {
-                    flagValues.push(...equalsMatch.groups.value.split(" "))
+                    flagValues.push(
+                        ...equalsMatch.groups.value
+                            .replace(new RegexProvier(/^['"]|['"]$/gu), "")
+                            .split(" "),
+                    )
                 }
             }
         } else {
-            flagValues.push(arg)
+            flagValues.push(arg.replace(new RegexProvier(/^['"]|['"]$/gu), ""))
         }
     }
 
@@ -129,22 +138,25 @@ export const messageCommandParser =
         }
 
         const prefixRegex = new RegexProvider(
-            `^(?<prefix><@[!&]?${12524121515341}> ?${
+            `^(?<prefix><@[!&]?${request.client.user.id}> ?${
                 prefix ? `|${escapeRegex(prefix)}` : ""
-            })(?<command>[A-z1-2]+)(?<rest>.*)`,
+            })(?<command>[A-z1-9]+)(?<rest>.*)`,
             "u",
         )
 
         const match = request.message.content.match(prefixRegex)
 
         if (match?.groups?.command && match.groups.rest !== undefined) {
-            const parsedArguments = parseArgs(match.groups.rest)
+            const parsedArguments = parseArgs(match.groups.rest, RegexProvider)
 
             request.commandName = match.groups.command
             request.body = parsedArguments
-        }
+            request.metadata.commandName = match.groups.command
 
-        next()
+            next()
+        } else {
+            return
+        }
     }
 
 export default messageCommandParser

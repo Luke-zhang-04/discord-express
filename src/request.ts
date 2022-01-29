@@ -114,5 +114,8 @@ export const createRequest = (trigger: Message | CommandInteraction): Request =>
         trigger,
         body: trigger.options.data,
         commandName: trigger.commandName,
+        metadata: {
+            commandName: trigger.commandName,
+        },
     }
 }
