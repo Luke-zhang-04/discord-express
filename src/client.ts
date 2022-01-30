@@ -1,17 +1,63 @@
 import * as discord from "discord.js"
 import {type RESTPostAPIApplicationCommandsJSONBody, Routes} from "discord-api-types/v9"
+import {createRequest, type Request} from "./request"
 import {DiscordExpressHandler} from "."
-import {createRequest} from "./request"
 import {createResponse} from "./response"
 import fetch from "node-fetch"
+import {isObject} from "@luke-zhang-04/utils"
 
 export interface ClientOptions extends discord.ClientOptions {
     authToken?: string
 }
 
-type StackItem = {
-    type: "use"
-    handler: DiscordExpressHandler
+export type CommandArray = [command: string, subCommandGroup?: string, subCommand?: string]
+
+export type StackItem =
+    | {type: "use"; handler: DiscordExpressHandler}
+    | {type: "command"; command: CommandArray[]; handler: DiscordExpressHandler}
+
+const matchCommand = (
+    commandArray: CommandArray,
+    {body, command, requestType}: Request,
+): boolean => {
+    const isMatchingCommand = commandArray[0] === "*" || commandArray[0] === command[0]
+    const isMatchingSubCommandGroup =
+        commandArray[1] === "*" || commandArray[0] === "*" || commandArray[1] === command[1]
+    const isMatchingSubCommand =
+        commandArray[2] === "*" ||
+        commandArray[1] === "*" ||
+        commandArray[0] === "*" ||
+        commandArray[2] === command[2]
+
+    const isPerfectMatch = isMatchingCommand && isMatchingSubCommandGroup && isMatchingSubCommand
+
+    if (requestType === "interaction" || isPerfectMatch) {
+        return isPerfectMatch
+    }
+
+    if (commandArray.length === 1) {
+        if (isMatchingCommand) {
+            return true
+        }
+    } else if (commandArray.length === 2) {
+        if (isMatchingCommand && isMatchingSubCommandGroup) {
+            if (isObject(body) && body._ instanceof Array) {
+                body._.splice(0, 1)
+            }
+
+            return true
+        }
+    } else if (commandArray.length === 3) {
+        if (isMatchingCommand && isMatchingSubCommandGroup && isMatchingSubCommand) {
+            if (isObject(body) && body._ instanceof Array) {
+                body._.splice(0, 2)
+            }
+
+            return true
+        }
+    }
+
+    return false
 }
 
 export class Client<Ready extends boolean = boolean> extends discord.Client<Ready> {
@@ -65,6 +111,23 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
         }
     }
 
+    public command(commands: string | string[], ...handlers: DiscordExpressHandler[]): void {
+        const commandArray: CommandArray[] = []
+        commands = typeof commands === "string" ? [commands] : commands
+
+        for (const command of commands) {
+            commandArray.push(command.replace(/^\//u, "").split("/") as CommandArray)
+        }
+
+        for (const handler of handlers) {
+            this._stack.push({
+                type: "command",
+                command: commandArray,
+                handler,
+            })
+        }
+    }
+
     public initExpress(): void {
         this.on("messageCreate", this.applyStack)
         this.on("interaction", this.applyStack)
@@ -81,10 +144,9 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
             }
         }
 
-        const stackIter = this._getStack()
-
         const request = createRequest(trigger)
         const response = createResponse(trigger)
+        const stackIter = this._getStack(request)
 
         const nextFunction = async (): Promise<void> => {
             await stackIter.next().value?.handler(request, response, nextFunction)
@@ -93,14 +155,20 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
         await nextFunction()
     }
 
-    private *_getStack(): Generator<StackItem, undefined, StackItem> {
+    private *_getStack(trigger: Request): Generator<StackItem, undefined, StackItem> {
         // Use index loop for performance
         // eslint-disable-next-line @typescript-eslint/prefer-for-of
         for (let index = 0; index < this._stack.length; index++) {
-            const stackItem = this._stack[index]
+            const stackItem = this._stack[index]!
 
-            if (stackItem?.type === "use") {
+            if (stackItem.type === "use") {
                 yield stackItem
+            } else if (stackItem.type === "command") {
+                for (const commandArray of stackItem.command) {
+                    if (matchCommand(commandArray, trigger)) {
+                        yield stackItem
+                    }
+                }
             }
         }
 

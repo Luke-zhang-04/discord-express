@@ -1,6 +1,8 @@
 import {
+    type CacheType,
     type Client,
     CommandInteraction,
+    type CommandInteractionOption,
     type Guild,
     type GuildMember,
     type InteractionType,
@@ -12,7 +14,7 @@ import {
 import type {APIInteractionGuildMember} from "discord-api-types"
 import {pick} from "@luke-zhang-04/utils"
 
-export type BaseRequest = {
+export interface BaseRequest {
     appId: string | null
 
     /**
@@ -38,12 +40,34 @@ export type BaseRequest = {
     id: string
     /** Arguments and options passed from the command */
     body: unknown
-    commandName?: string
+    /**
+     * Command details. Note that for message commands, positional arguments are inserted even if
+     * they may not be subcommands or subcommand groups.
+     *
+     * @example
+     *
+     * ```ts
+     * // A command that looks like this
+     * const input = "!myCommand arg1 arg2 arg3"
+     *
+     * // Will output this
+     * const output = {
+     *     body: {
+     *         _: ["arg1", "arg2", "arg4"],
+     *     },
+     *     command: ["myCommand", "arg1", "arg2"],
+     * }
+     * ```
+     *
+     * Because of this ambiguity, the decision of how to treat this behaviour is up to the
+     * programmer later on. Note that this behaviour is properly handled by discord-express.
+     */
+    command: [command?: string, subCommandGroup?: string, subCommand?: string]
     /** Extra metadata that can be stored for any purpose */
     metadata: {[key: string]: unknown}
 }
 
-export type MessageRequest = BaseRequest & {
+export interface MessageRequest extends BaseRequest {
     requestType: "message"
     member: GuildMember | null
     type: MessageType
@@ -54,7 +78,7 @@ export type MessageRequest = BaseRequest & {
     trigger: Message
 }
 
-export type InteractionRequest = BaseRequest & {
+export interface InteractionRequest extends BaseRequest {
     requestType: "interaction"
     member: APIInteractionGuildMember | GuildMember | null
     type: InteractionType
@@ -63,15 +87,27 @@ export type InteractionRequest = BaseRequest & {
     interaction?: CommandInteraction
     /** What triggered the command. In this case, it's a command interaction */
     trigger: CommandInteraction
-    commandName: string
 }
 
 export type Request = MessageRequest | InteractionRequest
+
+const convertInteractionOption = (
+    options: readonly CommandInteractionOption<CacheType>[],
+): {[key: string]: string | number | boolean | undefined} => {
+    const body: {[key: string]: string | number | boolean | undefined} = {}
+
+    for (const option of options) {
+        body[option.name] = option.value
+    }
+
+    return body
+}
 
 export const createRequest = (trigger: Message | CommandInteraction): Request => {
     const commonAttributes = {
         appId: trigger.applicationId,
         metadata: {},
+        command: [] as [string?, string?, string?],
         ...pick(
             trigger,
             "channel",
@@ -101,6 +137,16 @@ export const createRequest = (trigger: Message | CommandInteraction): Request =>
         }
     }
 
+    const commandArray: [string, string?, string?] = [trigger.commandName]
+    const subCommandGroup = trigger.options.getSubcommandGroup(false) ?? undefined
+    const subCommand = trigger.options.getSubcommand(false) ?? undefined
+
+    if (subCommandGroup) {
+        commandArray.push(subCommandGroup, subCommand)
+    } else {
+        commandArray.push(subCommand, undefined)
+    }
+
     return {
         ...commonAttributes,
         requestType: "interaction",
@@ -112,10 +158,7 @@ export const createRequest = (trigger: Message | CommandInteraction): Request =>
         message: undefined,
         interaction: trigger,
         trigger,
-        body: trigger.options.data,
-        commandName: trigger.commandName,
-        metadata: {
-            commandName: trigger.commandName,
-        },
+        body: convertInteractionOption(trigger.options.data),
+        command: commandArray,
     }
 }

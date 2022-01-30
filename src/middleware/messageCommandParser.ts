@@ -153,9 +153,12 @@ export const messageCommandParser =
         if (match?.groups?.command && match.groups.rest !== undefined) {
             const parsedArguments = parseArgs(match.groups.rest, RegexProvider)
 
-            request.commandName = match.groups.command
             request.body = parsedArguments
-            request.metadata.commandName = match.groups.command
+            request.command = [
+                match.groups.command,
+                parsedArguments?._[0],
+                parsedArguments?._[1],
+            ]
 
             next()
         } else {
