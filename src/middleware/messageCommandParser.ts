@@ -1,10 +1,13 @@
 import {type DiscordExpressHandler} from ".."
 import {parseArgsStringToArgv as stringArgv} from "string-argv"
 
-const escapeRegex = (str: string): string => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+const escapeRegex = (str: string): string => str.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&")
+
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 const parseArgs = (
     str: string,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     RegexProvier: RegExpConstructor = RegExp,
 ): {[key: string]: unknown; _: string[]} | undefined => {
     const argArray = stringArgv(str)
@@ -45,11 +48,11 @@ const parseArgs = (
                 }
             }
 
-            currentFlag = arg.replace(new RegexProvier(/^-{1,2}/u), "")
+            currentFlag = arg.replace(new RegexProvier(/^-{1,2}/u, "u"), "")
             flagValues = []
 
             const equalsMatch = currentFlag.match(
-                new RegexProvier(/^(?<flag>[A-z1-9]+)=(?<value>.*)/u),
+                new RegexProvier(/^(?<flag>[A-z1-9]+)=(?<value>.*)/u, "u"),
             )
 
             if (equalsMatch?.groups) {
@@ -59,13 +62,13 @@ const parseArgs = (
                 if (equalsMatch.groups.value) {
                     flagValues.push(
                         ...equalsMatch.groups.value
-                            .replace(new RegexProvier(/^['"]|['"]$/gu), "")
+                            .replace(new RegexProvier(/^['"]|['"]$/gu, "gu"), "")
                             .split(" "),
                     )
                 }
             }
         } else {
-            flagValues.push(arg.replace(new RegexProvier(/^['"]|['"]$/gu), ""))
+            flagValues.push(arg.replace(new RegexProvier(/^['"]|['"]$/gu, "gu"), ""))
         }
     }
 
@@ -126,6 +129,7 @@ export interface MessageCommandParserOptions {
 export const messageCommandParser =
     ({
         prefix,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         regexProvider: RegexProvider = RegExp,
     }: MessageCommandParserOptions = {}): DiscordExpressHandler =>
     (request, _, next) => {

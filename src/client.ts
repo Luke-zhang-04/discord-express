@@ -95,6 +95,7 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
 
     private *_getStack(): Generator<StackItem, undefined, StackItem> {
         // Use index loop for performance
+        // eslint-disable-next-line @typescript-eslint/prefer-for-of
         for (let index = 0; index < this._stack.length; index++) {
             const stackItem = this._stack[index]
 

@@ -1,27 +1,29 @@
 // https://github.com/discordjs/discord.js/discussions/6179#discussioncomment-1044212
-import type {APIMessage, APIUser, APIGuildMember, APIChannel, APIGuild} from "discord-api-types"
+import type {APIChannel, APIGuild, APIGuildMember, APIMessage, APIUser} from "discord-api-types"
 import {
-    Client,
-    Guild,
     Channel,
-    GuildTextBasedChannel,
-    User,
-    GuildMember,
-    Message,
-    ClientOptions,
+    Client,
+    type ClientOptions,
     ClientUser,
+    DMChannel,
+    Guild,
+    type GuildBasedChannel,
+    GuildChannel,
+    GuildMember,
+    type GuildTextBasedChannel,
+    Message,
+    User,
 } from "discord.js"
 import {
     ChannelType,
     GuildDefaultMessageNotifications,
-    GuildSystemChannelFlags,
-    GuildPremiumTier,
     GuildNSFWLevel,
+    GuildPremiumTier,
+    GuildSystemChannelFlags,
     MessageType,
 } from "discord-api-types"
-import {DMChannel} from "discord.js"
-import {GuildBasedChannel} from "discord.js"
-import {GuildChannel} from "discord.js"
+
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 
 const randomTimestamp = (): number => {
     const start = new Date(0)

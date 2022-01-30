@@ -5,6 +5,8 @@ import {
     type MessageOptions,
 } from "discord.js"
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 export abstract class BaseResponse {
     public abstract defer(): Promise<void>
     public abstract send(
@@ -29,6 +31,7 @@ export class MessageResponse extends BaseResponse {
         super()
     }
 
+    // eslint-disable-next-line require-await
     public async defer(): Promise<void> {
         return
     }

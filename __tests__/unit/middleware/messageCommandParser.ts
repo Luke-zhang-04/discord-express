@@ -6,7 +6,7 @@ import messageCommandParser from "../../../src/middleware/messageCommandParser"
 
 describe("messageCommandParser", () => {
     describe("parse command", () => {
-        test("should parse command with ping", async () => {
+        test("should parse command with ping", () => {
             const mockDiscord = new MockDiscord()
             const mockNext = new MockNext()
             const message = mockDiscord.mockMessage()
@@ -23,7 +23,7 @@ describe("messageCommandParser", () => {
             expect(request.metadata.commandName).toBe("myCommand")
         })
 
-        test("should parse command with prefix", async () => {
+        test("should parse command with prefix", () => {
             const mockDiscord = new MockDiscord()
             const mockNext = new MockNext()
             const message = mockDiscord.mockMessage({
@@ -73,7 +73,7 @@ describe("messageCommandParser", () => {
             ],
         },
     ])("parsing $name", ({name, data}) => {
-        test.each(data)(`should parse command with ${name}`, async (input, output) => {
+        test.each(data)(`should parse command with ${name}`, (input, output) => {
             const mockDiscord = new MockDiscord()
             const mockNext = new MockNext()
             const message = mockDiscord.mockMessage({

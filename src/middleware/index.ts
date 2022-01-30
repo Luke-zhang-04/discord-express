@@ -1,4 +1,4 @@
-import {type NoBotsOptions,noBots, } from "./noBots"
+import {type NoBotsOptions, noBots} from "./noBots"
 import {type NoDMsOptions, noDMs} from "./noDMs"
 import {DiscordExpressHandler} from ".."
 

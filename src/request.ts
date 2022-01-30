@@ -1,8 +1,8 @@
 import {
     type Client,
+    CommandInteraction,
     type Guild,
     type GuildMember,
-    CommandInteraction,
     type InteractionType,
     Message,
     type MessageType,

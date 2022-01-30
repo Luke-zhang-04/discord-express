@@ -5,7 +5,7 @@ import {createResponse} from "../../../src/response"
 import noDMs from "../../../src/middleware/noDMs"
 
 describe("noDMs", () => {
-    test("should not call next if author is in DMs", async () => {
+    test("should not call next if author is in DMs", () => {
         const mockDiscord = new MockDiscord()
         const mockNext = new MockNext()
         const message = mockDiscord.mockMessage({
@@ -21,7 +21,7 @@ describe("noDMs", () => {
         expect(mockNext.callCount).toBe(0)
     })
 
-    test("should call next if author is in allowedUsers", async () => {
+    test("should call next if author is in allowedUsers", () => {
         const mockDiscord = new MockDiscord()
         const mockNext = new MockNext()
         const message = mockDiscord.mockMessage({
@@ -36,7 +36,7 @@ describe("noDMs", () => {
         expect(mockNext.callCount).toBe(1)
     })
 
-    test("should call next if author is not in DMs", async () => {
+    test("should call next if author is not in DMs", () => {
         const mockDiscord = new MockDiscord()
         const mockNext = new MockNext()
         const message = mockDiscord.mockMessage()
