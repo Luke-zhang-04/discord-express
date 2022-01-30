@@ -1,8 +1,8 @@
 import MockDiscord from "../../../__mocks__/discord"
-import messageCommandParser from "../../../src/middleware/messageCommandParser"
 import {MockNext} from "../../../__mocks__/discord-express"
 import {createRequest} from "../../../src/request"
 import {createResponse} from "../../../src/response"
+import messageCommandParser from "../../../src/middleware/messageCommandParser"
 
 describe("messageCommandParser", () => {
     describe("parse command", () => {
@@ -18,8 +18,7 @@ describe("messageCommandParser", () => {
 
             middleware(request, createResponse(message), mockNext.next.bind(mockNext))
 
-            await mockNext.waitForNext()
-
+            expect(mockNext.callCount).toBe(1)
             expect(request.body).toMatchObject({_: []})
             expect(request.metadata.commandName).toBe("myCommand")
         })
@@ -36,8 +35,7 @@ describe("messageCommandParser", () => {
 
             middleware(request, createResponse(message), mockNext.next.bind(mockNext))
 
-            await mockNext.waitForNext()
-
+            expect(mockNext.callCount).toBe(1)
             expect(request.body).toMatchObject({_: []})
             expect(request.metadata.commandName).toBe("myCommand123")
         })
@@ -87,8 +85,7 @@ describe("messageCommandParser", () => {
 
             middleware(request, createResponse(message), mockNext.next.bind(mockNext))
 
-            await mockNext.waitForNext()
-
+            expect(mockNext.callCount).toBe(1)
             expect(request.body).toMatchObject(output)
         })
     })
