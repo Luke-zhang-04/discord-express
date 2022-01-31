@@ -19,6 +19,7 @@ const apiApplicationCommandOptionBaseSchema = zod.object({
 const apiApplicationCommandBasicOptionSchema = apiApplicationCommandOptionBaseSchema.extend({
     autocomplete: zod.boolean().optional(),
     choices: zod.array(zod.unknown()).optional(),
+    options: zod.array(apiApplicationCommandOptionBaseSchema).optional(),
 })
 
 const apiApplicationCommandSubcommandOptionSchema = apiApplicationCommandOptionBaseSchema.extend({
