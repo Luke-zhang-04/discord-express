@@ -24,7 +24,6 @@
     }
   },
   "dependencies": {
-    "@discordjs/rest": "^0.2.0-canary.0",
     "@luke-zhang-04/utils": "github:luke-zhang-04/utils#semver:^1.7.1",
     "case": "^1.6.3",
     "discord-api-types": "^0.26.1",
