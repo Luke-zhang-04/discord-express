@@ -1,7 +1,7 @@
 import * as discord from "discord.js"
+import {type DiscordExpressErrorHandler, type DiscordExpressHandler} from "."
 import {type RESTPostAPIApplicationCommandsJSONBody, Routes} from "discord-api-types/v9"
 import {createRequest, type Request} from "./request"
-import {DiscordExpressHandler} from "."
 import {createResponse} from "./response"
 import fetch from "node-fetch"
 import {isObject} from "@luke-zhang-04/utils"
@@ -14,7 +14,10 @@ export type CommandArray = [command: string, subCommandGroup?: string, subComman
 
 export type StackItem =
     | {type: "use"; handler: DiscordExpressHandler}
+    | {type: "error"; handler: DiscordExpressErrorHandler}
     | {type: "command"; command: CommandArray[]; handler: DiscordExpressHandler}
+
+type Ref<T> = {current?: T}
 
 const matchCommand = (
     commandArray: CommandArray,
@@ -127,6 +130,11 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
             })
         }
     }
+    public error(...handlers: DiscordExpressErrorHandler[]): void {
+        for (const handler of handlers) {
+            this._stack.push({type: "error", handler})
+        }
+    }
 
     public initExpress(): void {
         this.on("messageCreate", this.applyStack)
@@ -144,29 +152,62 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
             }
         }
 
+        let error: Ref<unknown> = {}
         const request = createRequest(trigger)
         const response = createResponse(trigger)
-        const stackIter = this._getStack(request)
+        const stackIter = this._getStack(request, error)
 
-        const nextFunction = async (): Promise<void> => {
-            await stackIter.next().value?.handler(request, response, nextFunction)
+        const nextFunction = async (err?: unknown): Promise<void> => {
+            // Avoid infinite error loop
+            const shouldCallNextOnError = error.current === undefined
+
+            if (err) {
+                error.current = err
+            }
+
+            try {
+                const item = stackIter.next().value
+
+                if (!item) {
+                    return
+                } else if (item.type === "error") {
+                    await item.handler(error.current, request, response, nextFunction)
+                } else {
+                    await item.handler(request, response, nextFunction)
+                }
+            } catch (err) {
+                error.current = err
+
+                if (shouldCallNextOnError) {
+                    await nextFunction()
+                }
+            }
         }
 
         await nextFunction()
     }
 
-    private *_getStack(trigger: Request): Generator<StackItem, undefined, StackItem> {
+    private *_getStack(
+        trigger: Request,
+        errorRef: Ref<unknown>,
+    ): Generator<StackItem, undefined, StackItem> {
         // Use index loop for performance
         // eslint-disable-next-line @typescript-eslint/prefer-for-of
         for (let index = 0; index < this._stack.length; index++) {
             const stackItem = this._stack[index]!
 
-            if (stackItem.type === "use") {
-                yield stackItem
-            } else if (stackItem.type === "command") {
-                for (const commandArray of stackItem.command) {
-                    if (matchCommand(commandArray, trigger)) {
-                        yield stackItem
+            if (errorRef.current) {
+                if (stackItem.type === "error") {
+                    yield stackItem
+                }
+            } else {
+                if (stackItem.type === "use") {
+                    yield stackItem
+                } else if (stackItem.type === "command") {
+                    for (const commandArray of stackItem.command) {
+                        if (matchCommand(commandArray, trigger)) {
+                            yield stackItem
+                        }
                     }
                 }
             }

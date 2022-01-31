@@ -10,3 +10,10 @@ export type DiscordExpressHandler = (
     response: Response,
     nextFunc: NextFunc,
 ) => void
+
+export type DiscordExpressErrorHandler = (
+    error: unknown,
+    request: Request,
+    response: Response,
+    nextFunc: NextFunc,
+) => void
