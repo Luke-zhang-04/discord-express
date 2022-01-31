@@ -20,7 +20,7 @@ describe("messageCommandParser", () => {
 
             expect(mockNext.callCount).toBe(1)
             expect(request.body).toMatchObject({_: []})
-            expect(request.metadata.commandName).toBe("myCommand")
+            expect(request.command[0]).toBe("myCommand")
         })
 
         test("should parse command with prefix", () => {
@@ -37,7 +37,7 @@ describe("messageCommandParser", () => {
 
             expect(mockNext.callCount).toBe(1)
             expect(request.body).toMatchObject({_: []})
-            expect(request.metadata.commandName).toBe("myCommand123")
+            expect(request.command[0]).toBe("myCommand123")
         })
     })
 
