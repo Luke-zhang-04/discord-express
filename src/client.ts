@@ -130,7 +130,7 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
 
     public initExpress(): void {
         this.on("messageCreate", this.applyStack)
-        this.on("interaction", this.applyStack)
+        this.on("interactionCreate", this.applyStack)
     }
 
     public async applyStack(trigger: discord.Message | discord.CommandInteraction): Promise<void> {
