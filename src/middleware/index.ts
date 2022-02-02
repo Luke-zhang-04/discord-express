@@ -45,4 +45,5 @@ export const recommended = ({
 
 export {noBots, noDMs}
 
+export {blacklist} from "./blacklist"
 export {messageCommandParser} from "./messageCommandParser"

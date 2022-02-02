@@ -12,6 +12,7 @@ import {
     GuildMember,
     type GuildTextBasedChannel,
     Message,
+    MessageManager,
     User,
 } from "discord.js"
 import {
@@ -147,7 +148,7 @@ export default class MockDiscord {
             bot: true,
         }
 
-        // @ts-expect-error
+        // @ts-expect-error this constructor is private
         const clientUser: ClientUser = new ClientUser(instance, userData)
 
         instance.user = clientUser
@@ -196,7 +197,7 @@ export default class MockDiscord {
             ...options,
         }
 
-        // @ts-expect-error
+        // @ts-expect-error this constructor is private
         const instance: Guild = new Guild(this.client, data)
 
         this._guild = {data, instance}
@@ -212,7 +213,7 @@ export default class MockDiscord {
             type: ChannelType.GuildText,
             ...options,
         }
-        // @ts-expect-error
+        // @ts-expect-error this constructor is private
         const instance: Channel = new Channel(this.client, data)
 
         this._channel = {data, instance}
@@ -236,6 +237,9 @@ export default class MockDiscord {
         // @ts-expect-error
         const instance: GuildTextBasedChannel = new GuildChannel(this.guild, data)
 
+        // @ts-expect-error this constructor is private
+        instance.messages = new MessageManager(instance)
+
         this._guildChannel = {data, instance}
 
         this.guild.channels.cache.set(instance.id, instance as GuildBasedChannel)
@@ -255,7 +259,7 @@ export default class MockDiscord {
             ...options,
         }
 
-        // @ts-expect-error
+        // @ts-expect-error this constructor is private
         const instance: DMChannel = new DMChannel(this.client, data)
 
         this._dmChannel = {data, instance}
@@ -275,7 +279,7 @@ export default class MockDiscord {
             ...options,
         }
 
-        // @ts-expect-error
+        // @ts-expect-error this constructor is private
         const instance: User = new User(this.client, data)
 
         this._user = {data, instance}
@@ -294,7 +298,7 @@ export default class MockDiscord {
             ...options,
         }
 
-        // @ts-expect-error
+        // @ts-expect-error this constructor is private
         const instance: GuildMember = new GuildMember(this.client, data, this.guild)
 
         this._guildMember = {data, instance}
@@ -304,7 +308,7 @@ export default class MockDiscord {
 
     public mockMessage(options: Partial<APIMessage> = {}): Message {
         const data: APIMessage = {
-            channel_id: this._guildChannel.data.id,
+            channel_id: this._guildChannel.instance.id,
             id: randomTimestamp().toString(),
             type: MessageType.Default,
             content: "this is the message content",
@@ -325,13 +329,15 @@ export default class MockDiscord {
             ...options,
         }
 
-        // @ts-expect-error
+        // @ts-expect-error this constructor is private
         const instance: Message = new Message(this.client, data)
 
         this._message = {data, instance}
 
         if (data.channel_id === this.guildChannel.id) {
-            this.guildChannel.messages?.cache.set(instance.id, instance)
+            this.guildChannel.messages.cache.set(instance.id, instance)
+
+            instance.guildId = this.guild.id
         } else if (data.channel_id === this.dmChannel.id) {
             this.dmChannel.messages.cache.set(instance.id, instance)
         }
