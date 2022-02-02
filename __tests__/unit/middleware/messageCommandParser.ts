@@ -1,8 +1,8 @@
-import MockDiscord from "../../../__mocks__/discord"
-import {MockNext} from "../../../__mocks__/discord-express"
-import {createRequest} from "../../../src/request"
-import {createResponse} from "../../../src/response"
-import messageCommandParser from "../../../src/middleware/messageCommandParser"
+import MockDiscord from "~/__mocks__/discord"
+import {MockNext} from "~/__mocks__/discord-express"
+import {createRequest} from "~/src/request"
+import {createResponse} from "~/src/response"
+import messageCommandParser from "~/src/middleware/messageCommandParser"
 
 describe("messageCommandParser", () => {
     describe("parse command", () => {

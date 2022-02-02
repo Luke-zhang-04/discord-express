@@ -1,8 +1,8 @@
-import MockDiscord from "../../../__mocks__/discord"
-import {MockNext} from "../../../__mocks__/discord-express"
-import {createRequest} from "../../../src/request"
-import {createResponse} from "../../../src/response"
-import blacklist from "../../../src/middleware/blacklist"
+import MockDiscord from "~/__mocks__/discord"
+import {MockNext} from "~/__mocks__/discord-express"
+import {createRequest} from "~/src/request"
+import {createResponse} from "~/src/response"
+import blacklist from "~/src/middleware/blacklist"
 
 describe("blacklist", () => {
     test("should not call next if user is blacklisted", () => {

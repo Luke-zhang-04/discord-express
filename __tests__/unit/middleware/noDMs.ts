@@ -1,8 +1,8 @@
-import MockDiscord from "../../../__mocks__/discord"
-import {MockNext} from "../../../__mocks__/discord-express"
-import {createRequest} from "../../../src/request"
-import {createResponse} from "../../../src/response"
-import noDMs from "../../../src/middleware/noDMs"
+import MockDiscord from "~/__mocks__/discord"
+import {MockNext} from "~/__mocks__/discord-express"
+import {createRequest} from "~/src/request"
+import {createResponse} from "~/src/response"
+import noDMs from "~/src/middleware/noDMs"
 
 describe("noDMs", () => {
     test("should not call next if author is in DMs", () => {

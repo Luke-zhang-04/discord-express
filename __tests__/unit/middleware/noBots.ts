@@ -1,8 +1,8 @@
-import MockDiscord from "../../../__mocks__/discord"
-import {MockNext} from "../../../__mocks__/discord-express"
-import {createRequest} from "../../../src/request"
-import {createResponse} from "../../../src/response"
-import noBots from "../../../src/middleware/noBots"
+import MockDiscord from "~/__mocks__/discord"
+import {MockNext} from "~/__mocks__/discord-express"
+import {createRequest} from "~/src/request"
+import {createResponse} from "~/src/response"
+import noBots from "~/src/middleware/noBots"
 
 describe("noBots", () => {
     test("should not call next if author is a bot", () => {
