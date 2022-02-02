@@ -19,7 +19,6 @@ import {
     type RESTPostAPIApplicationCommandsJSONBody,
 } from "discord-api-types/v9"
 import Case from "case"
-import {pick} from "@luke-zhang-04/utils"
 import {commandsSchema} from "./validate"
 
 const resolveOptionType = (
@@ -85,7 +84,7 @@ const resolveCommandOptions = (
                       const type = resolveOptionType(option.type)
 
                       const commonAttributes = {
-                          name,
+                          name: Case.kebab(name),
                           description,
                           required: isRequired ?? false,
                       }
@@ -95,7 +94,7 @@ const resolveCommandOptions = (
                               return {
                                   ...commonAttributes,
                                   type,
-                                  ...pick(option as NumericOption, "autoComplete", "defaultValue"),
+                                  autocomplete: (option as NumericOption).autoComplete,
                                   min_value: (option as NumericOption).min,
                                   max_value: (option as NumericOption).max,
                                   choices: (option as NumericOption).choices?.map((val) =>
@@ -110,7 +109,7 @@ const resolveCommandOptions = (
                               return {
                                   ...commonAttributes,
                                   type,
-                                  ...pick(option as NumericOption, "autoComplete", "defaultValue"),
+                                  autocomplete: (option as NumericOption).autoComplete,
                                   min_value: (option as NumericOption).min,
                                   max_value: (option as NumericOption).max,
                                   choices: (option as NumericOption).choices?.map((val) =>
@@ -123,7 +122,7 @@ const resolveCommandOptions = (
                               return {
                                   ...commonAttributes,
                                   type,
-                                  ...pick(option as StringOption, "autoComplete", "defaultValue"),
+                                  autocomplete: (option as StringOption).autoComplete,
                                   choices: (option as StringOption).choices?.map((val) =>
                                       val instanceof Array
                                           ? {name: val[0], value: val[1]}
@@ -167,6 +166,8 @@ const resolveSubCommandGroups = ({
             options: resolveSubCommands(subCommands),
         }),
     )
+
+export {OptionTypes}
 
 export const createCommands = (commands: Commands): RESTPostAPIApplicationCommandsJSONBody[] =>
     commandsSchema.parse(

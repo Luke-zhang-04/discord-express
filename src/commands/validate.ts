@@ -1,3 +1,8 @@
+/**
+ * @file minimal Validation for command output. Checks are very basic and do not garuntee a good
+ *   request to the API
+ */
+
 import * as zod from "zod"
 import {ApplicationCommandOptionType, ApplicationCommandType} from "discord-api-types"
 
@@ -9,33 +14,36 @@ const nameSchema = zod
 
 const descriptionSchema = zod.string().min(1).max(100)
 
-const apiApplicationCommandOptionBaseSchema = zod.object({
+const optionSchema = zod.object({
     type: zod.number(),
     name: nameSchema,
     description: descriptionSchema,
     required: zod.boolean().optional(),
 })
 
-const apiApplicationCommandBasicOptionSchema = apiApplicationCommandOptionBaseSchema.extend({
+const anyOptionSchema = optionSchema.extend({
     autocomplete: zod.boolean().optional(),
     choices: zod.array(zod.unknown()).optional(),
-    options: zod.array(apiApplicationCommandOptionBaseSchema).optional(),
+    options: zod.array(optionSchema).optional(),
+    min_value: zod.number().optional(),
+    max_value: zod.number().optional(),
+    channel_types: zod.array(zod.number()).optional(),
 })
 
-const apiApplicationCommandSubcommandOptionSchema = apiApplicationCommandOptionBaseSchema.extend({
+const subCommandSchema = optionSchema.extend({
     type: zod.number().refine((arg) => arg === ApplicationCommandOptionType.Subcommand),
-    options: zod.array(apiApplicationCommandBasicOptionSchema).optional(),
+    options: zod.array(anyOptionSchema).optional(),
 })
 
-const apiApplicationCommandSubcommandGroupOption = apiApplicationCommandOptionBaseSchema.extend({
+const subCommandGroupSchema = optionSchema.extend({
     type: zod.number().refine((arg) => arg === ApplicationCommandOptionType.SubcommandGroup),
-    options: zod.array(apiApplicationCommandSubcommandOptionSchema).optional(),
+    options: zod.array(subCommandSchema).optional(),
 })
 
 const apiApplicationCommandOptionSchema = zod.union([
-    apiApplicationCommandBasicOptionSchema,
-    apiApplicationCommandSubcommandOptionSchema,
-    apiApplicationCommandSubcommandGroupOption,
+    subCommandSchema,
+    subCommandGroupSchema,
+    anyOptionSchema,
 ])
 
 export const commandsSchema = zod.array(

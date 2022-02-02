@@ -24,7 +24,7 @@
     }
   },
   "dependencies": {
-    "@luke-zhang-04/utils": "github:luke-zhang-04/utils#semver:^1.7.1",
+    "@luke-zhang-04/utils": "github:luke-zhang-04/utils#semver:^2.0.0",
     "case": "^1.6.3",
     "discord-api-types": "^0.26.1",
     "node-fetch": "^3.2.0",
@@ -32,6 +32,7 @@
     "zod": "^3.11.6"
   },
   "devDependencies": {
+    "@discordjs/builders": "^0.12.0",
     "@types/jest": "^27.4.0",
     "@types/node": "^17.0.10",
     "@typescript-eslint/eslint-plugin": "^5.10.0",
