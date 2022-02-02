@@ -154,11 +154,7 @@ export const messageCommandParser =
             const parsedArguments = parseArgs(match.groups.rest, RegexProvider)
 
             request.body = parsedArguments
-            request.command = [
-                match.groups.command,
-                parsedArguments?._[0],
-                parsedArguments?._[1],
-            ]
+            request.command = [match.groups.command, parsedArguments?._[0], parsedArguments?._[1]]
 
             next()
         } else {

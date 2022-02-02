@@ -1,4 +1,11 @@
 import {
+    type APIApplicationCommandBasicOption,
+    type APIApplicationCommandSubcommandGroupOption,
+    type APIApplicationCommandSubcommandOption,
+    ApplicationCommandOptionType,
+    type RESTPostAPIApplicationCommandsJSONBody,
+} from "discord-api-types/v9"
+import {
     type AllOptionTypes,
     type ChannelOption,
     type Commands,
@@ -11,13 +18,6 @@ import {
     isSubCommand,
     isSubCommandGroup,
 } from "./types"
-import {
-    type APIApplicationCommandBasicOption,
-    type APIApplicationCommandSubcommandGroupOption,
-    type APIApplicationCommandSubcommandOption,
-    ApplicationCommandOptionType,
-    type RESTPostAPIApplicationCommandsJSONBody,
-} from "discord-api-types/v9"
 import Case from "case"
 import {commandsSchema} from "./validate"
 
@@ -145,7 +145,9 @@ const resolveCommandOptions = (
               )
               .sort((first, second) => (first.required && !second.required ? -1 : 0))
 
-const resolveSubCommands = ({commands}: SubCommand): APIApplicationCommandSubcommandOption[] =>
+const resolveCommandsFromSubcommand = ({
+    commands,
+}: SubCommand): APIApplicationCommandSubcommandOption[] =>
     Object.entries(commands).map(
         ([name, {description, options}]): APIApplicationCommandSubcommandOption => ({
             name: Case.kebab(name),
@@ -155,15 +157,15 @@ const resolveSubCommands = ({commands}: SubCommand): APIApplicationCommandSubcom
         }),
     )
 
-const resolveSubCommandGroups = ({
+const resolveSubCommandsFromSubCommandGroup = ({
     subCommands,
 }: SubCommandGroup): APIApplicationCommandSubcommandGroupOption[] =>
     Object.entries(subCommands).map(
-        ([name, subCommands]): APIApplicationCommandSubcommandGroupOption => ({
+        ([name, subCommand]): APIApplicationCommandSubcommandGroupOption => ({
             name: Case.kebab(name),
-            description: subCommands.description,
+            description: subCommand.description,
             type: ApplicationCommandOptionType.SubcommandGroup,
-            options: resolveSubCommands(subCommands),
+            options: resolveCommandsFromSubcommand(subCommand),
         }),
     )
 
@@ -181,12 +183,12 @@ export const createCommands = (commands: Commands): RESTPostAPIApplicationComman
             if (isSubCommand(command)) {
                 return {
                     ...commonAttributes,
-                    options: resolveSubCommands(command),
+                    options: resolveCommandsFromSubcommand(command),
                 }
             } else if (isSubCommandGroup(command)) {
                 return {
                     ...commonAttributes,
-                    options: resolveSubCommandGroups(command),
+                    options: resolveSubCommandsFromSubCommandGroup(command),
                 }
             }
 

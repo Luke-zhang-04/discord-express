@@ -1,7 +1,7 @@
 import * as discord from "discord.js"
 import {type DiscordExpressErrorHandler, type DiscordExpressHandler} from "."
 import {type RESTPostAPIApplicationCommandsJSONBody, Routes} from "discord-api-types/v9"
-import {createRequest, type Request} from "./request"
+import {type Request, createRequest} from "./request"
 import {createResponse} from "./response"
 import fetch from "node-fetch"
 import {isObject} from "@luke-zhang-04/utils"
@@ -130,6 +130,7 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
             })
         }
     }
+
     public error(...handlers: DiscordExpressErrorHandler[]): void {
         for (const handler of handlers) {
             this._stack.push({type: "error", handler})
@@ -152,7 +153,7 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
             }
         }
 
-        let error: Ref<unknown> = {}
+        const error: Ref<unknown> = {}
         const request = createRequest(trigger)
         const response = createResponse(trigger)
         const stackIter = this._getStack(request, error)
@@ -175,8 +176,8 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
                 } else {
                     await item.handler(request, response, nextFunction)
                 }
-            } catch (err) {
-                error.current = err
+            } catch (_err) {
+                error.current = _err
 
                 if (shouldCallNextOnError) {
                     await nextFunction()
@@ -194,6 +195,7 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
         // Use index loop for performance
         // eslint-disable-next-line @typescript-eslint/prefer-for-of
         for (let index = 0; index < this._stack.length; index++) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const stackItem = this._stack[index]!
 
             if (errorRef.current) {

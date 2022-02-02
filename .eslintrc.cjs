@@ -14,7 +14,7 @@ module.exports = {
     parserOptions: {
         ecmaVersion: 12,
         sourceType: "module",
-        project: ["./tsconfig.json", "./tsconfig.test.json"],
+        project: ["./tsconfig.json", "./__tests__/tsconfig.json"],
     },
     plugins: ["@typescript-eslint", "prefer-arrow", "prettier"],
     rules: {
@@ -109,7 +109,7 @@ module.exports = {
         "@typescript-eslint/no-duplicate-imports": "warn",
         "@typescript-eslint/no-empty-interface": "off",
         "@typescript-eslint/no-magic-numbers": [
-            "warn",
+            "off",
             {
                 ignoreEnums: true,
                 ignoreNumericLiteralTypes: true,

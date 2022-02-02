@@ -1,6 +1,6 @@
+import {OptionTypes, createCommands} from "~/src"
 import {ChannelType} from "discord-api-types"
 import {SlashCommandBuilder} from "@discordjs/builders"
-import {createCommands, OptionTypes} from "~/src"
 
 describe("createCommands", () => {
     describe("commands", () => {
