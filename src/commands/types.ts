@@ -154,21 +154,21 @@ export interface Command {
 
 export interface SubCommand {
     description: string
-    subCommands: {[subCommands: string]: Command}
+    commands: {[commandName: string]: Command}
 }
 
 export const isSubCommand = (obj: unknown): obj is SubCommand =>
-    isObject(obj) && typeof obj.subCommands === "object"
+    isObject(obj) && typeof obj.commands === "object"
 
 export interface SubCommandGroup {
     description: string
-    subCommandGroups: {
-        [subCommandGroup: string]: SubCommand
+    subCommands: {
+        [subCommandName: string]: SubCommand
     }
 }
 
 export const isSubCommandGroup = (obj: unknown): obj is SubCommandGroup =>
-    isObject(obj) && typeof obj.subCommandGroups === "object"
+    isObject(obj) && typeof obj.subCommands === "object"
 
 export interface Commands {
     [name: string]: {

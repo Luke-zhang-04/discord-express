@@ -145,8 +145,8 @@ const resolveCommandOptions = (
               )
               .sort((first, second) => (first.required && !second.required ? -1 : 0))
 
-const resolveSubCommands = ({subCommands}: SubCommand): APIApplicationCommandSubcommandOption[] =>
-    Object.entries(subCommands).map(
+const resolveSubCommands = ({commands}: SubCommand): APIApplicationCommandSubcommandOption[] =>
+    Object.entries(commands).map(
         ([name, {description, options}]): APIApplicationCommandSubcommandOption => ({
             name: Case.kebab(name),
             description,
@@ -156,9 +156,9 @@ const resolveSubCommands = ({subCommands}: SubCommand): APIApplicationCommandSub
     )
 
 const resolveSubCommandGroups = ({
-    subCommandGroups,
+    subCommands,
 }: SubCommandGroup): APIApplicationCommandSubcommandGroupOption[] =>
-    Object.entries(subCommandGroups).map(
+    Object.entries(subCommands).map(
         ([name, subCommands]): APIApplicationCommandSubcommandGroupOption => ({
             name: Case.kebab(name),
             description: subCommands.description,

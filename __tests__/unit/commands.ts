@@ -175,10 +175,10 @@ describe("createCommands", () => {
                     mySubCommandGroup: {
                         description: "My subcommand group",
                         defaultPermission: true,
-                        subCommandGroups: {
+                        subCommands: {
                             mySubCommand: {
                                 description: "My subcommand",
-                                subCommands: {
+                                commands: {
                                     myCommand: {
                                         description: "My command",
                                         options: {
@@ -194,7 +194,7 @@ describe("createCommands", () => {
                     },
                     myOtherSubCommand: {
                         description: "My other subcommand",
-                        subCommands: {
+                        commands: {
                             myOtherCommand: {
                                 description: "My other command",
                                 options: {
