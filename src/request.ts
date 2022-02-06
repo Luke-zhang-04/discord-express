@@ -14,7 +14,7 @@ import {
 import type {APIInteractionGuildMember} from "discord-api-types"
 import {pick} from "@luke-zhang-04/utils"
 
-export interface BaseRequest {
+export interface BaseRequest<Body = unknown> {
     appId: string | null
 
     /**
@@ -39,7 +39,7 @@ export interface BaseRequest {
     guildId: string | null
     id: string
     /** Arguments and options passed from the command */
-    body: unknown
+    body: Body
     /**
      * Command details. Note that for message commands, positional arguments are inserted even if
      * they may not be subcommands or subcommand groups.
@@ -67,7 +67,7 @@ export interface BaseRequest {
     metadata: {[key: string]: unknown}
 }
 
-export interface MessageRequest extends BaseRequest {
+export interface MessageRequest<Body = unknown> extends BaseRequest<Body> {
     requestType: "message"
     member: GuildMember | null
     type: MessageType
@@ -78,7 +78,7 @@ export interface MessageRequest extends BaseRequest {
     trigger: Message
 }
 
-export interface InteractionRequest extends BaseRequest {
+export interface InteractionRequest<Body = unknown> extends BaseRequest<Body> {
     requestType: "interaction"
     member: APIInteractionGuildMember | GuildMember | null
     type: InteractionType
@@ -89,7 +89,7 @@ export interface InteractionRequest extends BaseRequest {
     trigger: CommandInteraction
 }
 
-export type Request = MessageRequest | InteractionRequest
+export type Request<Body = unknown> = MessageRequest<Body> | InteractionRequest<Body>
 
 const convertInteractionOption = (
     options: readonly CommandInteractionOption<CacheType>[],
