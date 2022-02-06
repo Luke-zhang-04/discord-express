@@ -2,9 +2,10 @@ import * as discord from "discord.js"
 import {type DiscordExpressErrorHandler, type DiscordExpressHandler} from "."
 import {type RESTPostAPIApplicationCommandsJSONBody, Routes} from "discord-api-types/v9"
 import {type Request, createRequest} from "./request"
+import {isObject, runIfDefined} from "@luke-zhang-04/utils"
 import {createResponse} from "./response"
 import fetch from "node-fetch"
-import {isObject} from "@luke-zhang-04/utils"
+import Case from "case"
 
 export interface ClientOptions extends discord.ClientOptions {
     authToken?: string
@@ -32,10 +33,43 @@ const matchCommand = (
         commandArray[0] === "*" ||
         commandArray[2] === command[2]
 
-    const isPerfectMatch = isMatchingCommand && isMatchingSubCommandGroup && isMatchingSubCommand
+    if (requestType === "interaction") {
+        // Since camelCase is not allowed by discord slash commands, a conversion is made
+        const isMatchingKebabCommand = Case.kebab(commandArray[0]) === command[0]
+        const isMatchingKebabSubCommandGroup =
+            runIfDefined(commandArray[1], Case.kebab) === command[1]
+        const isMatchingKebabSubCommand = runIfDefined(commandArray[2], Case.kebab) === command[2]
 
-    if (requestType === "interaction" || isPerfectMatch) {
-        return isPerfectMatch
+        if (
+            !isMatchingCommand &&
+            isMatchingKebabCommand &&
+            command[0] !== undefined &&
+            commandArray[0] !== undefined
+        ) {
+            command[0] = commandArray[0]
+        }
+        if (
+            !isMatchingSubCommandGroup &&
+            isMatchingKebabSubCommandGroup &&
+            command[1] !== undefined &&
+            commandArray[1] !== undefined
+        ) {
+            command[1] = commandArray[1]
+        }
+        if (
+            !isMatchingSubCommand &&
+            isMatchingKebabSubCommand &&
+            command[2] !== undefined &&
+            commandArray[2] !== undefined
+        ) {
+            command[2] = commandArray[2]
+        }
+
+        return (
+            (isMatchingCommand || isMatchingKebabCommand) &&
+            (isMatchingSubCommandGroup || isMatchingKebabSubCommandGroup) &&
+            (isMatchingSubCommand || isMatchingKebabSubCommand)
+        )
     }
 
     if (commandArray.length === 1) {
@@ -189,7 +223,7 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
     }
 
     private *_getStack(
-        trigger: Request,
+        request: Request,
         errorRef: Ref<unknown>,
     ): Generator<StackItem, undefined, StackItem> {
         // Use index loop for performance
@@ -207,7 +241,7 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
                     yield stackItem
                 } else if (stackItem.type === "command") {
                     for (const commandArray of stackItem.command) {
-                        if (matchCommand(commandArray, trigger)) {
+                        if (matchCommand(commandArray, request)) {
                             yield stackItem
                         }
                     }
