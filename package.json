@@ -24,7 +24,7 @@
     }
   },
   "dependencies": {
-    "@luke-zhang-04/utils": "github:luke-zhang-04/utils#semver:^2.0.0",
+    "@luke-zhang-04/utils": "github:luke-zhang-04/utils#semver:^2.0.1",
     "case": "^1.6.3",
     "discord-api-types": "^0.26.1",
     "node-fetch": "^3.2.0",

@@ -1,7 +1,6 @@
 import {type DiscordExpressHandler} from ".."
+import {escapeRegex} from "@luke-zhang-04/utils"
 import {parseArgsStringToArgv as stringArgv} from "string-argv"
-
-const escapeRegex = (str: string): string => str.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&")
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 

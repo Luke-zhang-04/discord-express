@@ -2,7 +2,7 @@ lockfileVersion: 5.3
 
 specifiers:
   '@discordjs/builders': ^0.12.0
-  '@luke-zhang-04/utils': github:luke-zhang-04/utils#semver:^2.0.0
+  '@luke-zhang-04/utils': github:luke-zhang-04/utils#semver:^2.0.1
   '@types/jest': ^27.4.0
   '@types/node': ^17.0.10
   '@typescript-eslint/eslint-plugin': ^5.10.0
@@ -26,7 +26,7 @@ specifiers:
   zod: ^3.11.6
 
 dependencies:
-  '@luke-zhang-04/utils': github.com/luke-zhang-04/utils/dc41c35bd371ee955d1c78fb2cf01e145acf57a5_e0afe8d2e4022ae35336ad88771510e1
+  '@luke-zhang-04/utils': github.com/luke-zhang-04/utils/de171d3f7aa6f370be02f465dd5f8fe51f5975f1_e0afe8d2e4022ae35336ad88771510e1
   case: 1.6.3
   discord-api-types: 0.26.1
   node-fetch: 3.2.0
@@ -3603,11 +3603,11 @@ packages:
   /zod/3.11.6:
     resolution: {integrity: sha512-daZ80A81I3/9lIydI44motWe6n59kRBfNzTuS2bfzVh1nAXi667TOTWWtatxyG+fwgNUiagSj/CWZwRRbevJIg==}
 
-  github.com/luke-zhang-04/utils/dc41c35bd371ee955d1c78fb2cf01e145acf57a5_e0afe8d2e4022ae35336ad88771510e1:
-    resolution: {tarball: https://codeload.github.com/luke-zhang-04/utils/tar.gz/dc41c35bd371ee955d1c78fb2cf01e145acf57a5}
-    id: github.com/luke-zhang-04/utils/dc41c35bd371ee955d1c78fb2cf01e145acf57a5
+  github.com/luke-zhang-04/utils/de171d3f7aa6f370be02f465dd5f8fe51f5975f1_e0afe8d2e4022ae35336ad88771510e1:
+    resolution: {tarball: https://codeload.github.com/luke-zhang-04/utils/tar.gz/de171d3f7aa6f370be02f465dd5f8fe51f5975f1}
+    id: github.com/luke-zhang-04/utils/de171d3f7aa6f370be02f465dd5f8fe51f5975f1
     name: '@luke-zhang-04/utils'
-    version: 2.0.0
+    version: 2.0.1
     engines: {node: '>=12'}
     peerDependencies:
       '@types/node': '>= 12'
