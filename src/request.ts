@@ -12,34 +12,44 @@ import {
     type User,
 } from "discord.js"
 import type {APIInteractionGuildMember} from "discord-api-types"
-import {pick} from "@luke-zhang-04/utils"
 
-export interface BaseRequest<Body = unknown> {
-    appId: string | null
+const convertInteractionOption = (
+    options: readonly CommandInteractionOption<CacheType>[],
+): {[key: string]: string | number | boolean | undefined} => {
+    const body: {[key: string]: string | number | boolean | undefined} = {}
 
-    /**
-     * Author of the request
-     *
-     * @alias user
-     */
-    author: User
+    for (const option of options) {
+        body[option.name] = option.value
+    }
 
+    return body
+}
+
+export abstract class BaseRequest<Body = unknown> {
     /**
      * User who triggered the request
      *
      * @alias author
      */
-    user: User
-    channel: TextBasedChannel | null
-    channelId: string | null
-    client: Client | null
-    createdAt: Date
-    createdTimestamp: number
-    guild: Guild | null
-    guildId: string | null
-    id: string
+    public abstract readonly user: User
+    public abstract readonly requestType: "message" | "interaction"
+    public abstract readonly member: GuildMember | APIInteractionGuildMember | null
+    public abstract readonly type: MessageType | InteractionType
+    public abstract readonly message?: Message
+    public abstract readonly interaction?: CommandInteraction
+    public abstract readonly trigger: Message | CommandInteraction
+
+    public readonly appId: string | null
+    public readonly channel: TextBasedChannel | null
+    public readonly channelId: string | null
+    public readonly client: Client | null
+    public readonly createdAt: Date
+    public readonly createdTimestamp: number
+    public readonly guild: Guild | null
+    public readonly guildId: string | null
+    public readonly id: string
     /** Arguments and options passed from the command */
-    body: Body
+    public abstract body: Body
     /**
      * Command details. Note that for message commands, positional arguments are inserted even if
      * they may not be subcommands or subcommand groups.
@@ -62,103 +72,101 @@ export interface BaseRequest<Body = unknown> {
      * Because of this ambiguity, the decision of how to treat this behaviour is up to the
      * programmer later on. Note that this behaviour is properly handled by discord-express.
      */
-    command: [command?: string, subCommandGroup?: string, subCommand?: string]
+    public command: [command?: string, subCommandGroup?: string, subCommand?: string] = []
     /** Extra metadata that can be stored for any purpose */
-    metadata: {[key: string]: unknown}
+    public metadata: {[key: string]: unknown} = {}
+
+    /**
+     * Author of the request
+     *
+     * @alias user
+     */
+    public get author(): User {
+        return this.user
+    }
+
+    public constructor(trigger: Message | CommandInteraction) {
+        this.appId = trigger.applicationId
+        this.channel = trigger.channel
+        this.channelId = trigger.channelId
+        this.client = trigger.client
+        this.createdAt = trigger.createdAt
+        this.createdTimestamp = trigger.createdTimestamp
+        this.guild = trigger.guild
+        this.guildId = trigger.guildId
+        this.id = trigger.id
+    }
 }
 
-export interface MessageRequest<Body = unknown> extends BaseRequest<Body> {
-    requestType: "message"
-    member: GuildMember | null
-    type: MessageType
+export class MessageRequest<Body = unknown> extends BaseRequest<Body> {
+    /**
+     * User who triggered the request
+     *
+     * @alias author
+     */
+    public override readonly user: User
+    public override readonly requestType = "message" as const
+    public override readonly member: GuildMember | null
+    public override readonly type: MessageType
 
-    message?: Message
-    interaction?: undefined
+    public override readonly interaction?: undefined = undefined
     /** What triggered the command. In this case, it's a message */
-    trigger: Message
+    public override readonly trigger: Message
+    public override body: Body
+
+    public constructor(public override readonly message: Message) {
+        super(message)
+
+        this.user = message.author
+        this.member = message.member
+
+        this.type = message.type
+        this.trigger = message
+        this.body = message.content as unknown as Body
+    }
 }
 
-export interface InteractionRequest<Body = unknown> extends BaseRequest<Body> {
-    requestType: "interaction"
-    member: APIInteractionGuildMember | GuildMember | null
-    type: InteractionType
+export class InteractionRequest<Body = unknown> extends BaseRequest<Body> {
+    /**
+     * User who triggered the request
+     *
+     * @alias author
+     */
+    public override readonly user: User
+    public override readonly requestType = "interaction" as const
+    public override readonly member: APIInteractionGuildMember | GuildMember | null
+    public override readonly type: InteractionType
 
-    message?: undefined
-    interaction?: CommandInteraction
+    public override readonly message?: undefined = undefined
     /** What triggered the command. In this case, it's a command interaction */
-    trigger: CommandInteraction
-}
+    public override readonly trigger: CommandInteraction
+    public override body: Body
 
-export type Request<Body = unknown> = MessageRequest<Body> | InteractionRequest<Body>
+    public constructor(public override readonly interaction: CommandInteraction) {
+        super(interaction)
 
-const convertInteractionOption = (
-    options: readonly CommandInteractionOption<CacheType>[],
-): {[key: string]: string | number | boolean | undefined} => {
-    const body: {[key: string]: string | number | boolean | undefined} = {}
+        this.user = interaction.user
+        this.member = interaction.member
 
-    for (const option of options) {
-        body[option.name] = option.value
-    }
+        this.type = interaction.type
+        this.trigger = interaction
+        this.body = convertInteractionOption(interaction.options.data) as unknown as Body
 
-    return body
-}
+        const commandArray: [string, string?, string?] = [interaction.commandName]
+        const subCommandGroup = interaction.options.getSubcommandGroup(false) ?? undefined
+        const subCommand = interaction.options.getSubcommand(false) ?? undefined
 
-export const createRequest = (trigger: Message | CommandInteraction): Request => {
-    const commonAttributes = {
-        appId: trigger.applicationId,
-        metadata: {},
-        command: [] as [string?, string?, string?],
-        ...pick(
-            trigger,
-            "channel",
-            "channelId",
-            "client",
-            "createdAt",
-            "createdTimestamp",
-            "guild",
-            "guildId",
-            "id",
-        ),
-    }
-
-    if (trigger instanceof Message) {
-        return {
-            ...commonAttributes,
-            requestType: "message",
-            author: trigger.author,
-            user: trigger.author,
-            member: trigger.member,
-
-            type: trigger.type,
-            message: trigger,
-            interaction: undefined,
-            trigger,
-            body: trigger.content,
+        if (subCommandGroup) {
+            commandArray.push(subCommandGroup, subCommand)
+        } else {
+            commandArray.push(subCommand, undefined)
         }
-    }
 
-    const commandArray: [string, string?, string?] = [trigger.commandName]
-    const subCommandGroup = trigger.options.getSubcommandGroup(false) ?? undefined
-    const subCommand = trigger.options.getSubcommand(false) ?? undefined
-
-    if (subCommandGroup) {
-        commandArray.push(subCommandGroup, subCommand)
-    } else {
-        commandArray.push(subCommand, undefined)
-    }
-
-    return {
-        ...commonAttributes,
-        requestType: "interaction",
-        author: trigger.user,
-        user: trigger.user,
-        member: trigger.member,
-
-        type: trigger.type,
-        message: undefined,
-        interaction: trigger,
-        trigger,
-        body: convertInteractionOption(trigger.options.data),
-        command: commandArray,
+        this.command = commandArray
     }
 }
+
+export {BaseRequest as Request}
+
+export const createRequest = (trigger: Message | CommandInteraction): BaseRequest =>
+    trigger instanceof Message ? new MessageRequest(trigger) : new InteractionRequest(trigger)
