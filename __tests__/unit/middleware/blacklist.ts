@@ -1,5 +1,5 @@
+import {Counter} from "../../utils"
 import MockDiscord from "~/__mocks__/discord"
-import {MockNext} from "~/__mocks__/discord-express"
 import blacklist from "~/src/middleware/blacklist"
 import {createRequest} from "~/src/request"
 import {createResponse} from "~/src/response"
@@ -12,7 +12,7 @@ describe("blacklist", () => {
                 id: userId,
             },
         })
-        const mockNext = new MockNext()
+        const counter = new Counter()
         const message = mockDiscord.mockMessage()
         const request = createRequest(message)
 
@@ -20,9 +20,9 @@ describe("blacklist", () => {
             users: [userId],
         })
 
-        middleware(request, createResponse(message), mockNext.next.bind(mockNext))
+        middleware(request, createResponse(message), counter.increment)
 
-        expect(mockNext.callCount).toBe(0)
+        expect(counter.callCount).toBe(0)
     })
 
     test("should not call next if guild is blacklisted", () => {
@@ -32,7 +32,7 @@ describe("blacklist", () => {
                 id: guildId,
             },
         })
-        const mockNext = new MockNext()
+        const counter = new Counter()
         const message = mockDiscord.mockMessage({
             channel_id: mockDiscord.guildChannel.id,
         })
@@ -42,14 +42,14 @@ describe("blacklist", () => {
             guilds: [guildId],
         })
 
-        middleware(request, createResponse(message), mockNext.next.bind(mockNext))
+        middleware(request, createResponse(message), counter.increment)
 
-        expect(mockNext.callCount).toBe(0)
+        expect(counter.callCount).toBe(0)
     })
 
     test("should call next if user is blacklisted", () => {
         const mockDiscord = new MockDiscord({})
-        const mockNext = new MockNext()
+        const counter = new Counter()
         const message = mockDiscord.mockMessage()
         const request = createRequest(message)
 
@@ -57,14 +57,14 @@ describe("blacklist", () => {
             users: ["100"],
         })
 
-        middleware(request, createResponse(message), mockNext.next.bind(mockNext))
+        middleware(request, createResponse(message), counter.increment)
 
-        expect(mockNext.callCount).toBe(1)
+        expect(counter.callCount).toBe(1)
     })
 
     test("should call next if guild is blacklisted", () => {
         const mockDiscord = new MockDiscord({})
-        const mockNext = new MockNext()
+        const counter = new Counter()
         const message = mockDiscord.mockMessage({
             channel_id: mockDiscord.guildChannel.id,
         })
@@ -74,8 +74,8 @@ describe("blacklist", () => {
             guilds: ["100"],
         })
 
-        middleware(request, createResponse(message), mockNext.next.bind(mockNext))
+        middleware(request, createResponse(message), counter.increment)
 
-        expect(mockNext.callCount).toBe(1)
+        expect(counter.callCount).toBe(1)
     })
 })

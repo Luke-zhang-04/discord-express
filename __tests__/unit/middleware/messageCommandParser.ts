@@ -1,5 +1,5 @@
+import {Counter} from "../../utils"
 import MockDiscord from "~/__mocks__/discord"
-import {MockNext} from "~/__mocks__/discord-express"
 import {createRequest} from "~/src/request"
 import {createResponse} from "~/src/response"
 import messageCommandParser from "~/src/middleware/messageCommandParser"
@@ -8,7 +8,7 @@ describe("messageCommandParser", () => {
     describe("parse command", () => {
         test("should parse command with ping", () => {
             const mockDiscord = new MockDiscord()
-            const mockNext = new MockNext()
+            const counter = new Counter()
             const message = mockDiscord.mockMessage()
             const request = createRequest(message)
 
@@ -16,16 +16,16 @@ describe("messageCommandParser", () => {
 
             const middleware = messageCommandParser({prefix: "!"})
 
-            middleware(request, createResponse(message), mockNext.next.bind(mockNext))
+            middleware(request, createResponse(message), counter.increment)
 
-            expect(mockNext.callCount).toBe(1)
+            expect(counter.callCount).toBe(1)
             expect(request.body).toMatchObject({_: []})
             expect(request.command[0]).toBe("myCommand")
         })
 
         test("should parse command with prefix", () => {
             const mockDiscord = new MockDiscord()
-            const mockNext = new MockNext()
+            const counter = new Counter()
             const message = mockDiscord.mockMessage({
                 content: "!myCommand123",
             })
@@ -33,9 +33,9 @@ describe("messageCommandParser", () => {
 
             const middleware = messageCommandParser({prefix: "!"})
 
-            middleware(request, createResponse(message), mockNext.next.bind(mockNext))
+            middleware(request, createResponse(message), counter.increment)
 
-            expect(mockNext.callCount).toBe(1)
+            expect(counter.callCount).toBe(1)
             expect(request.body).toMatchObject({_: []})
             expect(request.command[0]).toBe("myCommand123")
         })
@@ -75,7 +75,7 @@ describe("messageCommandParser", () => {
     ])("parsing $name", ({name, data}) => {
         test.each(data)(`should parse command with ${name}`, (input, output) => {
             const mockDiscord = new MockDiscord()
-            const mockNext = new MockNext()
+            const counter = new Counter()
             const message = mockDiscord.mockMessage({
                 content: `!myCommand2 ${input}`,
             })
@@ -83,9 +83,9 @@ describe("messageCommandParser", () => {
 
             const middleware = messageCommandParser({prefix: "!"})
 
-            middleware(request, createResponse(message), mockNext.next.bind(mockNext))
+            middleware(request, createResponse(message), counter.increment)
 
-            expect(mockNext.callCount).toBe(1)
+            expect(counter.callCount).toBe(1)
             expect(request.body).toMatchObject(output)
         })
     })
