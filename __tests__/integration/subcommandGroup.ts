@@ -9,7 +9,7 @@ afterEach(() => {
     awaiter.reset()
 })
 
-describe("test subcommands", () => {
+describe("test subcommand groups", () => {
     const mockDiscord = new MockDiscord()
     const {client} = mockDiscord
 
@@ -18,17 +18,23 @@ describe("test subcommands", () => {
     client.use(...middleware.recommended())
     client.use(middleware.messageCommandParser({prefix: "!"}))
 
-    client.command("mySubCommand/myCommand", () => {
+    client.command("mySubcommandGroup/mySubcommand/myCommand", () => {
         awaiter.call()
     })
 
-    test("should run subCommand", async () => {
+    test("should run subcommand", async () => {
         const interaction = mockDiscord.mockCommandInteraction(undefined, {
-            name: "my-sub-command",
+            name: "my-subcommand-group",
             options: [
                 {
-                    type: ApplicationCommandOptionType.Subcommand,
-                    name: "my-command",
+                    type: ApplicationCommandOptionType.SubcommandGroup,
+                    name: "my-subcommand",
+                    options: [
+                        {
+                            type: ApplicationCommandOptionType.Subcommand,
+                            name: "my-command",
+                        },
+                    ],
                 },
             ],
         })

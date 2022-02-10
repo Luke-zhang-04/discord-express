@@ -168,15 +168,15 @@ describe("createCommands", () => {
         })
     })
 
-    describe("commands + subCommands + options", () => {
+    describe("commands + subcommands + options", () => {
         const cases = [
             [
                 createCommands({
-                    mySubCommandGroup: {
+                    mySubcommandGroup: {
                         description: "My subcommand group",
                         defaultPermission: true,
-                        subCommands: {
-                            mySubCommand: {
+                        subcommands: {
+                            mySubcommand: {
                                 description: "My subcommand",
                                 commands: {
                                     myCommand: {
@@ -192,7 +192,7 @@ describe("createCommands", () => {
                             },
                         },
                     },
-                    myOtherSubCommand: {
+                    myOtherSubcommand: {
                         description: "My other subcommand",
                         commands: {
                             myOtherCommand: {
@@ -225,15 +225,15 @@ describe("createCommands", () => {
                 }),
                 [
                     new SlashCommandBuilder()
-                        .setName("my-sub-command-group")
+                        .setName("my-subcommand-group")
                         .setDescription("My subcommand group")
                         .setDefaultPermission(true)
-                        .addSubcommandGroup((subCommandGroup) =>
-                            subCommandGroup
-                                .setName("my-sub-command")
+                        .addSubcommandGroup((subcommandGroup) =>
+                            subcommandGroup
+                                .setName("my-subcommand")
                                 .setDescription("My subcommand")
-                                .addSubcommand((subCommand) =>
-                                    subCommand
+                                .addSubcommand((subcommand) =>
+                                    subcommand
                                         .setName("my-command")
                                         .setDescription("My command")
                                         .addRoleOption((option) =>
@@ -245,10 +245,10 @@ describe("createCommands", () => {
                         )
                         .toJSON(),
                     new SlashCommandBuilder()
-                        .setName("my-other-sub-command")
+                        .setName("my-other-subcommand")
                         .setDescription("My other subcommand")
-                        .addSubcommand((subCommand) =>
-                            subCommand
+                        .addSubcommand((subcommand) =>
+                            subcommand
                                 .setName("my-other-command")
                                 .setDescription("My other command")
                                 .addUserOption((option) =>

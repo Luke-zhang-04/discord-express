@@ -30,19 +30,19 @@ const anyOptionSchema = optionSchema.extend({
     channel_types: zod.array(zod.number()).optional(),
 })
 
-const subCommandSchema = optionSchema.extend({
+const subcommandSchema = optionSchema.extend({
     type: zod.number().refine((arg) => arg === ApplicationCommandOptionType.Subcommand),
     options: zod.array(anyOptionSchema).optional(),
 })
 
-const subCommandGroupSchema = optionSchema.extend({
+const subcommandGroupSchema = optionSchema.extend({
     type: zod.number().refine((arg) => arg === ApplicationCommandOptionType.SubcommandGroup),
-    options: zod.array(subCommandSchema).optional(),
+    options: zod.array(subcommandSchema).optional(),
 })
 
 const apiApplicationCommandOptionSchema = zod.union([
-    subCommandSchema,
-    subCommandGroupSchema,
+    subcommandSchema,
+    subcommandGroupSchema,
     anyOptionSchema,
 ])
 

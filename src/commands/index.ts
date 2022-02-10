@@ -13,10 +13,10 @@ import {
     type Option,
     OptionTypes,
     type StringOption,
-    type SubCommand,
-    type SubCommandGroup,
-    isSubCommand,
-    isSubCommandGroup,
+    type Subcommand,
+    type SubcommandGroup,
+    isSubcommand,
+    isSubcommandGroup,
 } from "./types"
 import Case from "case"
 import {commandsSchema} from "./validate"
@@ -147,7 +147,7 @@ const resolveCommandOptions = (
 
 const resolveCommandsFromSubcommand = ({
     commands,
-}: SubCommand): APIApplicationCommandSubcommandOption[] =>
+}: Subcommand): APIApplicationCommandSubcommandOption[] =>
     Object.entries(commands).map(
         ([name, {description, options}]): APIApplicationCommandSubcommandOption => ({
             name: Case.kebab(name),
@@ -157,15 +157,15 @@ const resolveCommandsFromSubcommand = ({
         }),
     )
 
-const resolveSubCommandsFromSubCommandGroup = ({
-    subCommands,
-}: SubCommandGroup): APIApplicationCommandSubcommandGroupOption[] =>
-    Object.entries(subCommands).map(
-        ([name, subCommand]): APIApplicationCommandSubcommandGroupOption => ({
+const resolveSubcommandsFromSubcommandGroup = ({
+    subcommands,
+}: SubcommandGroup): APIApplicationCommandSubcommandGroupOption[] =>
+    Object.entries(subcommands).map(
+        ([name, subcommand]): APIApplicationCommandSubcommandGroupOption => ({
             name: Case.kebab(name),
-            description: subCommand.description,
+            description: subcommand.description,
             type: ApplicationCommandOptionType.SubcommandGroup,
-            options: resolveCommandsFromSubcommand(subCommand),
+            options: resolveCommandsFromSubcommand(subcommand),
         }),
     )
 
@@ -180,15 +180,15 @@ export const createCommands = (commands: Commands): RESTPostAPIApplicationComman
                 description: command.description,
             }
 
-            if (isSubCommand(command)) {
+            if (isSubcommand(command)) {
                 return {
                     ...commonAttributes,
                     options: resolveCommandsFromSubcommand(command),
                 }
-            } else if (isSubCommandGroup(command)) {
+            } else if (isSubcommandGroup(command)) {
                 return {
                     ...commonAttributes,
-                    options: resolveSubCommandsFromSubCommandGroup(command),
+                    options: resolveSubcommandsFromSubcommandGroup(command),
                 }
             }
 

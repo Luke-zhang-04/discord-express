@@ -72,7 +72,7 @@ export abstract class BaseRequest<Body = unknown> {
      * Because of this ambiguity, the decision of how to treat this behaviour is up to the
      * programmer later on. Note that this behaviour is properly handled by discord-express.
      */
-    public command: [command?: string, subCommandGroup?: string, subCommand?: string] = []
+    public command: [command?: string, subcommandGroup?: string, subcommand?: string] = []
     /** Extra metadata that can be stored for any purpose */
     public metadata: {[key: string]: unknown} = {}
 
@@ -153,13 +153,13 @@ export class InteractionRequest<Body = unknown> extends BaseRequest<Body> {
         this.body = convertInteractionOption(interaction.options.data) as unknown as Body
 
         const commandArray: [string, string?, string?] = [interaction.commandName]
-        const subCommandGroup = interaction.options.getSubcommandGroup(false) ?? undefined
-        const subCommand = interaction.options.getSubcommand(false) ?? undefined
+        const subcommandGroup = interaction.options.getSubcommandGroup(false) ?? undefined
+        const subcommand = interaction.options.getSubcommand(false) ?? undefined
 
-        if (subCommandGroup) {
-            commandArray.push(subCommandGroup, subCommand)
+        if (subcommandGroup) {
+            commandArray.push(subcommandGroup, subcommand)
         } else {
-            commandArray.push(subCommand, undefined)
+            commandArray.push(subcommand, undefined)
         }
 
         this.command = commandArray

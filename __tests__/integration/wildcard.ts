@@ -42,9 +42,9 @@ describe("test wildcard matching", () => {
             ["random-subcommand", "random-command"],
             ["another-subcommand", "another-command"],
             ["a", "e"],
-        ])("should match any subcommand", async (subCommand, command) => {
+        ])("should match any subcommand", async (subcommand, command) => {
             const interaction = mockDiscord.mockCommandInteraction(undefined, {
-                name: subCommand,
+                name: subcommand,
                 options: [
                     {
                         type: ApplicationCommandOptionType.Subcommand,
@@ -64,13 +64,13 @@ describe("test wildcard matching", () => {
             ["random-subcommand-group", "random-subcommand", "random-command"],
             ["another-subcommand-group", "another-subcommand", "another-command"],
             ["O", "a", "e"],
-        ])("should match any subcommand group", async (subCommandGroup, subCommand, command) => {
+        ])("should match any subcommand group", async (subcommandGroup, subcommand, command) => {
             const interaction = mockDiscord.mockCommandInteraction(undefined, {
-                name: subCommandGroup,
+                name: subcommandGroup,
                 options: [
                     {
                         type: ApplicationCommandOptionType.SubcommandGroup,
-                        name: subCommand,
+                        name: subcommand,
                         options: [
                             {
                                 type: ApplicationCommandOptionType.Subcommand,
@@ -98,7 +98,7 @@ describe("test wildcard matching", () => {
         client.use(...middleware.recommended())
         client.use(middleware.messageCommandParser({prefix: "!"}))
 
-        client.command("mySubCommand/*", () => {
+        client.command("mySubcommand/*", () => {
             awaiter.call()
         })
 
@@ -106,7 +106,7 @@ describe("test wildcard matching", () => {
             "should match any subcommand",
             async (command) => {
                 const interaction = mockDiscord.mockCommandInteraction(undefined, {
-                    name: "my-sub-command",
+                    name: "my-subcommand",
                     options: [
                         {
                             type: ApplicationCommandOptionType.Subcommand,
@@ -127,13 +127,13 @@ describe("test wildcard matching", () => {
             ["random-subcommand", "random-command"],
             ["another-subcommand", "another-command"],
             ["a", "e"],
-        ])("should match any subcommand group", async (subCommand, command) => {
+        ])("should match any subcommand group", async (subcommand, command) => {
             const interaction = mockDiscord.mockCommandInteraction(undefined, {
-                name: "my-sub-command",
+                name: "my-subcommand",
                 options: [
                     {
                         type: ApplicationCommandOptionType.SubcommandGroup,
-                        name: subCommand,
+                        name: subcommand,
                         options: [
                             {
                                 type: ApplicationCommandOptionType.Subcommand,
@@ -161,7 +161,7 @@ describe("test wildcard matching", () => {
         client.use(...middleware.recommended())
         client.use(middleware.messageCommandParser({prefix: "!"}))
 
-        client.command("mySubCommandGroup/mySubCommand/*", () => {
+        client.command("mySubcommandGroup/mySubcommand/*", () => {
             awaiter.call()
         })
 
@@ -169,11 +169,11 @@ describe("test wildcard matching", () => {
             "should match any subcommand group",
             async (command) => {
                 const interaction = mockDiscord.mockCommandInteraction(undefined, {
-                    name: "my-sub-command-group",
+                    name: "my-subcommand-group",
                     options: [
                         {
                             type: ApplicationCommandOptionType.SubcommandGroup,
-                            name: "my-sub-command",
+                            name: "my-subcommand",
                             options: [
                                 {
                                     type: ApplicationCommandOptionType.Subcommand,

@@ -8,9 +8,9 @@ export const matchCommand = (
     {body, command, requestType}: Request,
 ): boolean => {
     const isMatchingCommand = commandArray[0] === "*" || commandArray[0] === command[0]
-    const isMatchingSubCommandGroup =
+    const isMatchingSubcommandGroup =
         commandArray[1] === "*" || commandArray[0] === "*" || commandArray[1] === command[1]
-    const isMatchingSubCommand =
+    const isMatchingSubcommand =
         commandArray[2] === "*" ||
         commandArray[1] === "*" ||
         commandArray[0] === "*" ||
@@ -19,9 +19,9 @@ export const matchCommand = (
     if (requestType === "interaction") {
         // Since camelCase is not allowed by discord slash commands, a conversion is made
         const isMatchingKebabCommand = Case.kebab(commandArray[0]) === command[0]
-        const isMatchingKebabSubCommandGroup =
+        const isMatchingKebabSubcommandGroup =
             runIfDefined(commandArray[1], Case.kebab) === command[1]
-        const isMatchingKebabSubCommand = runIfDefined(commandArray[2], Case.kebab) === command[2]
+        const isMatchingKebabSubcommand = runIfDefined(commandArray[2], Case.kebab) === command[2]
 
         if (
             !isMatchingCommand &&
@@ -32,16 +32,16 @@ export const matchCommand = (
             command[0] = commandArray[0]
         }
         if (
-            !isMatchingSubCommandGroup &&
-            isMatchingKebabSubCommandGroup &&
+            !isMatchingSubcommandGroup &&
+            isMatchingKebabSubcommandGroup &&
             command[1] !== undefined &&
             commandArray[1] !== undefined
         ) {
             command[1] = commandArray[1]
         }
         if (
-            !isMatchingSubCommand &&
-            isMatchingKebabSubCommand &&
+            !isMatchingSubcommand &&
+            isMatchingKebabSubcommand &&
             command[2] !== undefined &&
             commandArray[2] !== undefined
         ) {
@@ -50,8 +50,8 @@ export const matchCommand = (
 
         return (
             (isMatchingCommand || isMatchingKebabCommand) &&
-            (isMatchingSubCommandGroup || isMatchingKebabSubCommandGroup) &&
-            (isMatchingSubCommand || isMatchingKebabSubCommand)
+            (isMatchingSubcommandGroup || isMatchingKebabSubcommandGroup) &&
+            (isMatchingSubcommand || isMatchingKebabSubcommand)
         )
     }
 
@@ -60,7 +60,7 @@ export const matchCommand = (
             return true
         }
     } else if (commandArray.length === 2) {
-        if (isMatchingCommand && isMatchingSubCommandGroup) {
+        if (isMatchingCommand && isMatchingSubcommandGroup) {
             if (isObject(body) && body._ instanceof Array) {
                 body._.splice(0, 1)
             }
@@ -68,7 +68,7 @@ export const matchCommand = (
             return true
         }
     } else if (commandArray.length === 3) {
-        if (isMatchingCommand && isMatchingSubCommandGroup && isMatchingSubCommand) {
+        if (isMatchingCommand && isMatchingSubcommandGroup && isMatchingSubcommand) {
             if (isObject(body) && body._ instanceof Array) {
                 body._.splice(0, 2)
             }

@@ -152,23 +152,23 @@ export interface Command {
     options?: {[name: string]: StringOption | NumericOption | ChannelOption | OtherOption}
 }
 
-export interface SubCommand {
+export interface Subcommand {
     description: string
     commands: {[commandName: string]: Command}
 }
 
-export const isSubCommand = (obj: unknown): obj is SubCommand =>
+export const isSubcommand = (obj: unknown): obj is Subcommand =>
     isObject(obj) && typeof obj.commands === "object"
 
-export interface SubCommandGroup {
+export interface SubcommandGroup {
     description: string
-    subCommands: {
-        [subCommandName: string]: SubCommand
+    subcommands: {
+        [subcommandName: string]: Subcommand
     }
 }
 
-export const isSubCommandGroup = (obj: unknown): obj is SubCommandGroup =>
-    isObject(obj) && typeof obj.subCommands === "object"
+export const isSubcommandGroup = (obj: unknown): obj is SubcommandGroup =>
+    isObject(obj) && typeof obj.subcommands === "object"
 
 export interface Commands {
     [name: string]: {
@@ -180,5 +180,5 @@ export interface Commands {
          * @see https://discord.com/developers/docs/interactions/application-commands#permissions
          */
         defaultPermission?: boolean
-    } & (Command | SubCommand | SubCommandGroup)
+    } & (Command | Subcommand | SubcommandGroup)
 }
