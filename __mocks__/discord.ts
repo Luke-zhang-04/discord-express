@@ -1,10 +1,26 @@
 // https://github.com/discordjs/discord.js/discussions/6179#discussioncomment-1044212
-import type {APIChannel, APIGuild, APIGuildMember, APIMessage, APIUser} from "discord-api-types"
+import {
+    type APIChatInputApplicationCommandInteractionData,
+    type APIChannel,
+    type APIChatInputApplicationCommandInteraction,
+    type APIGuild,
+    type APIGuildMember,
+    type APIMessage,
+    type APIUser,
+    ApplicationCommandType,
+    ChannelType,
+    GuildDefaultMessageNotifications,
+    GuildNSFWLevel,
+    GuildPremiumTier,
+    GuildSystemChannelFlags,
+    InteractionType,
+    MessageType,
+} from "discord-api-types"
 import {
     Channel,
-    Client,
     type ClientOptions,
     ClientUser,
+    CommandInteraction,
     DMChannel,
     Guild,
     type GuildBasedChannel,
@@ -15,23 +31,13 @@ import {
     MessageManager,
     User,
 } from "discord.js"
-import {
-    ChannelType,
-    GuildDefaultMessageNotifications,
-    GuildNSFWLevel,
-    GuildPremiumTier,
-    GuildSystemChannelFlags,
-    MessageType,
-} from "discord-api-types"
+import {Client} from "~/src"
+import crypto from "crypto"
+import {randint} from "@luke-zhang-04/utils"
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
-const randomTimestamp = (): number => {
-    const start = new Date(0)
-    const end = new Date()
-
-    return Math.floor(start.getTime() + Math.random() * (end.getTime() - start.getTime()))
-}
+const randomTimestamp = (): number => randint(0, Date.now())
 
 interface ConstructorOptions {
     clientOptions?: Partial<ClientOptions>
@@ -42,9 +48,10 @@ interface ConstructorOptions {
     userOptions?: Partial<APIUser>
     guildMemberOptions?: Partial<APIGuildMember>
     messageOptions?: Partial<APIMessage>
+    commandInteractionOptions?: Partial<APIChatInputApplicationCommandInteraction>
 }
 
-export default class MockDiscord {
+export class MockDiscord {
     private _client!: {instance: Client; data: ClientOptions}
     private _guild!: {instance: Guild; data: APIGuild}
     private _channel!: {instance: Channel; data: APIChannel}
@@ -53,6 +60,10 @@ export default class MockDiscord {
     private _user!: {instance: User; data: APIUser}
     private _guildMember!: {instance: GuildMember; data: APIGuildMember}
     private _message!: {instance: Message; data: APIMessage}
+    private _commandInteraction!: {
+        instance: CommandInteraction
+        data: APIChatInputApplicationCommandInteraction
+    }
 
     constructor({
         clientOptions,
@@ -63,6 +74,7 @@ export default class MockDiscord {
         userOptions,
         guildMemberOptions,
         messageOptions,
+        commandInteractionOptions,
     }: ConstructorOptions = {}) {
         this.mockClient(clientOptions)
         this.mockGuild(guildOptions)
@@ -72,6 +84,7 @@ export default class MockDiscord {
         this.mockUser(userOptions)
         this.mockGuildMember(guildMemberOptions)
         this.mockMessage(messageOptions)
+        this.mockCommandInteraction(commandInteractionOptions)
     }
 
     public get client(): Client {
@@ -132,6 +145,14 @@ export default class MockDiscord {
 
     public get apiMessage(): APIMessage {
         return this._message.data
+    }
+
+    public get commandInteraction(): CommandInteraction {
+        return this._commandInteraction.instance
+    }
+
+    public get apiCommandInteraction(): APIChatInputApplicationCommandInteraction {
+        return this._commandInteraction.data
     }
 
     public mockClient(options: Partial<ClientOptions> = {}): Client {
@@ -308,7 +329,7 @@ export default class MockDiscord {
 
     public mockMessage(options: Partial<APIMessage> = {}): Message {
         const data: APIMessage = {
-            channel_id: this._guildChannel.instance.id,
+            channel_id: this.guildChannel.id,
             id: randomTimestamp().toString(),
             type: MessageType.Default,
             content: "this is the message content",
@@ -344,4 +365,42 @@ export default class MockDiscord {
 
         return instance
     }
+
+    public mockCommandInteraction(
+        options: Partial<APIChatInputApplicationCommandInteraction> = {},
+        _data: Partial<APIChatInputApplicationCommandInteractionData> = {},
+    ): CommandInteraction {
+        const data: APIChatInputApplicationCommandInteraction = {
+            id: randomTimestamp().toString(),
+            application_id: randomTimestamp().toString(),
+            type: InteractionType.ApplicationCommand,
+            guild_id: this.guild.id,
+            channel_id: this.guildChannel.id,
+            member: {
+                ...this._guildMember.data,
+                permissions: "",
+                user: this._user.data,
+            },
+            user: this._user.data,
+            token: crypto.randomBytes(32).toString("utf-8"),
+            version: 1,
+            data: {
+                id: randomTimestamp().toString(),
+                name: "Command Interaction Data Name",
+                type: ApplicationCommandType.ChatInput,
+                options: [],
+                ..._data,
+            },
+            ...options,
+        }
+
+        // @ts-expect-error
+        const instance: CommandInteraction = new CommandInteraction(this.client, data)
+
+        this._commandInteraction = {data, instance}
+
+        return instance
+    }
 }
+
+export default MockDiscord

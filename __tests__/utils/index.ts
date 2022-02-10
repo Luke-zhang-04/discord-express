@@ -1,3 +1,7 @@
+class AwaiterError extends Error {
+    public override name = "AwaiterError"
+}
+
 export class Counter {
     protected counter = 0
 
@@ -15,6 +19,10 @@ export class Counter {
 
     public call = () => {
         this.increment()
+    }
+
+    public reset = () => {
+        this.counter = 0
     }
 }
 
@@ -55,7 +63,7 @@ export class Awaiter extends Counter {
     }
 
     /**
-     * Waits for `numberOfCalls` to happen from the time of initialization of this function
+     * Waits for `numberOfCalls` to happen from the time of invokation of this function
      *
      * @param numberOfCalls - Number of calls to wait for starting now
      * @param timeout - Timeout in ms
@@ -68,7 +76,7 @@ export class Awaiter extends Counter {
             timeoutId = setTimeout(() => {
                 this._awaiterItems
                     .find((item) => item.id === id)
-                    ?.reject(new Error("Awaiter timed out"))
+                    ?.reject(new AwaiterError("Awaiter timed out"))
             }, timeout)
         }
 
