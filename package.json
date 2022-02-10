@@ -2,7 +2,7 @@
   "name": "discord-express",
   "version": "0.0.0",
   "description": "",
-  "license": "BSD-3-Clause",
+  "license": "MIT",
   "author": "",
   "main": "lib/index.js",
   "type": "module",
