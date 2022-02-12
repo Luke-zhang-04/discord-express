@@ -159,14 +159,17 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
                     yield stackItem
                 }
             } else {
-                if (stackItem.type === "use") {
-                    yield stackItem
-                } else if (stackItem.type === "command") {
-                    for (const commandArray of stackItem.command) {
-                        if (matchCommand(commandArray, request)) {
-                            yield stackItem
+                switch (stackItem.type) {
+                    case "use":
+                        yield stackItem
+                        break
+                    case "command":
+                        for (const commandArray of stackItem.command) {
+                            if (matchCommand(commandArray, request)) {
+                                yield stackItem
+                            }
                         }
-                    }
+                        break
                 }
             }
         }
