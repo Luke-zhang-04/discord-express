@@ -49,7 +49,7 @@ export class Awaiter extends Counter {
 
     /** @param timeout - Timeout in ms */
     public async wait(timeout?: number): Promise<void> {
-        return this.waitFor(1, timeout)
+        return await this.waitFor(1, timeout)
     }
 
     /**
@@ -59,7 +59,7 @@ export class Awaiter extends Counter {
      * @param timeout - Timeout in ms
      */
     public async waitUntil(numberOfTotalCalls: number, timeout?: number): Promise<void> {
-        return this.waitFor(numberOfTotalCalls - this.counter, timeout)
+        return await this.waitFor(numberOfTotalCalls - this.counter, timeout)
     }
 
     /**
@@ -80,19 +80,19 @@ export class Awaiter extends Counter {
             }, timeout)
         }
 
-        return new Promise((resolve, reject) => {
+        return await new Promise((resolve, reject) => {
             this._awaiterItems.push({
                 id,
                 counter: 0,
                 until: numberOfCalls,
-                resolve() {
+                resolve: () => {
                     if (timeoutId) {
                         clearTimeout(timeoutId)
                     }
 
                     resolve()
                 },
-                reject(reason?: unknown) {
+                reject: (reason?: unknown) => {
                     if (timeoutId) {
                         clearTimeout(timeoutId)
                     }

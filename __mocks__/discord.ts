@@ -1,8 +1,8 @@
 // https://github.com/discordjs/discord.js/discussions/6179#discussioncomment-1044212
 import {
-    type APIChatInputApplicationCommandInteractionData,
     type APIChannel,
     type APIChatInputApplicationCommandInteraction,
+    type APIChatInputApplicationCommandInteractionData,
     type APIGuild,
     type APIGuildMember,
     type APIMessage,

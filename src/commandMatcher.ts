@@ -1,4 +1,4 @@
-import {runIfDefined, isObject} from "@luke-zhang-04/utils"
+import {isObject, runIfDefined} from "@luke-zhang-04/utils"
 import Case from "case"
 import type {CommandArray} from "./client"
 import type {Request} from "./request"

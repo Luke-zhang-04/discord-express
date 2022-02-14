@@ -147,7 +147,7 @@ export const messageCommandParser =
             throw new Error("Client user id not defined")
         }
 
-        let _prefix = (await getPrefix?.(request)) ?? prefix
+        const _prefix = (await getPrefix?.(request)) ?? prefix
 
         const prefixRegex = new RegexProvider(
             `^(?<prefix><@[!&]?${request.client.user.id}> ?${

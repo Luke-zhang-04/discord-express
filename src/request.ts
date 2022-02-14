@@ -26,19 +26,6 @@ const convertInteractionOption = (
 }
 
 export abstract class BaseRequest<Body = unknown> {
-    /**
-     * User who triggered the request
-     *
-     * @alias author
-     */
-    public abstract readonly user: User
-    public abstract readonly requestType: "message" | "interaction"
-    public abstract readonly member: GuildMember | APIInteractionGuildMember | null
-    public abstract readonly type: MessageType | InteractionType
-    public abstract readonly message?: Message
-    public abstract readonly interaction?: CommandInteraction
-    public abstract readonly trigger: Message | CommandInteraction
-
     public readonly appId: string | null
     public readonly channel: TextBasedChannel | null
     public readonly channelId: string | null
@@ -48,8 +35,7 @@ export abstract class BaseRequest<Body = unknown> {
     public readonly guild: Guild | null
     public readonly guildId: string | null
     public readonly id: string
-    /** Arguments and options passed from the command */
-    public abstract body: Body
+
     /**
      * Command details. Note that for message commands, positional arguments are inserted even if
      * they may not be subcommands or subcommand groups.
@@ -73,17 +59,25 @@ export abstract class BaseRequest<Body = unknown> {
      * programmer later on. Note that this behaviour is properly handled by discord-express.
      */
     public command: [command?: string, subcommandGroup?: string, subcommand?: string] = []
+
     /** Extra metadata that can be stored for any purpose */
     public metadata: {[key: string]: unknown} = {}
 
     /**
-     * Author of the request
+     * User who triggered the request
      *
-     * @alias user
+     * @alias author
      */
-    public get author(): User {
-        return this.user
-    }
+    public abstract readonly user: User
+    public abstract readonly requestType: "message" | "interaction"
+    public abstract readonly member: GuildMember | APIInteractionGuildMember | null
+    public abstract readonly type: MessageType | InteractionType
+    public abstract readonly message?: Message
+    public abstract readonly interaction?: CommandInteraction
+    public abstract readonly trigger: Message | CommandInteraction
+
+    /** Arguments and options passed from the command */
+    public abstract body: Body
 
     public constructor(trigger: Message | CommandInteraction) {
         this.appId = trigger.applicationId
@@ -95,6 +89,15 @@ export abstract class BaseRequest<Body = unknown> {
         this.guild = trigger.guild
         this.guildId = trigger.guildId
         this.id = trigger.id
+    }
+
+    /**
+     * Author of the request
+     *
+     * @alias user
+     */
+    public get author(): User {
+        return this.user
     }
 }
 

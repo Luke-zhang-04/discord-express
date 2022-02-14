@@ -30,6 +30,8 @@ export type StackItem =
 type Ref<T> = {current?: T}
 
 export class Client<Ready extends boolean = boolean> extends discord.Client<Ready> {
+    /** @alias interactionCommand */
+    public slashCommand = this.interactioncommand
     private _stack: StackItem[] = []
 
     public constructor({authToken, ...options}: ClientOptions) {
@@ -97,9 +99,6 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
     ): void {
         this._addCommand("interactionCommand", commands, ...handlers)
     }
-
-    /** @alias interactionCommand */
-    public slashCommand = this.interactioncommand
 
     public error(...handlers: DiscordExpressErrorHandler[]): void {
         for (const handler of handlers) {

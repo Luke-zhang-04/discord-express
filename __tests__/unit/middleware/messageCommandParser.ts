@@ -121,7 +121,7 @@ describe("messageCommandParser", () => {
 
             const middleware = messageCommandParser({
                 prefix: "!",
-                getPrefix: async () => Promise.resolve("myPrefix!"),
+                getPrefix: async () => await Promise.resolve("myPrefix!"),
             })
 
             middleware(request, createResponse(message), awaiter.increment)
@@ -141,7 +141,7 @@ describe("messageCommandParser", () => {
 
             const middleware = messageCommandParser({
                 prefix: "!",
-                getPrefix: async () => undefined,
+                getPrefix: () => undefined,
             })
 
             middleware(request, createResponse(message), awaiter.increment)

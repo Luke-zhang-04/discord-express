@@ -134,7 +134,7 @@ describe("test error in last error handler", () => {
         let output = ""
         const consoleError = console.error
 
-        console.error = (...data: any[]): void => {
+        console.error = (...data: unknown[]): void => {
             output += data.join(" ")
         }
 
