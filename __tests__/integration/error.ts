@@ -136,8 +136,6 @@ describe("test error in last error handler", () => {
 
         console.error = (...data: any[]): void => {
             output += data.join(" ")
-
-            consoleError(...data)
         }
 
         const interaction = mockDiscord.mockCommandInteraction()

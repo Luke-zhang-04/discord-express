@@ -1,5 +1,5 @@
-import {type DiscordExpressHandler} from ".."
-import {escapeRegex} from "@luke-zhang-04/utils"
+import type {DiscordExpressHandler, Request} from ".."
+import {type MaybePromise, escapeRegex} from "@luke-zhang-04/utils"
 import {parseArgsStringToArgv as stringArgv} from "string-argv"
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
@@ -96,6 +96,12 @@ export interface MessageCommandParserOptions {
      */
     prefix?: string
 
+    /**
+     * Get a dynamic prefix e.g from a database synchronously or asynchronously. Return null or
+     * undefined to fall back to default prefix
+     */
+    getPrefix?: (request: Request) => MaybePromise<string | null | undefined>
+
     /** Optionally set a custom regex provider, such as RE2 */
     regexProvider?: RegExpConstructor
 }
@@ -128,10 +134,11 @@ export interface MessageCommandParserOptions {
 export const messageCommandParser =
     ({
         prefix,
+        getPrefix,
         // eslint-disable-next-line @typescript-eslint/naming-convention
         regexProvider: RegexProvider = RegExp,
     }: MessageCommandParserOptions = {}): DiscordExpressHandler =>
-    (request, _, next) => {
+    async (request, _, next) => {
         if (!request.message) {
             next()
 
@@ -140,9 +147,11 @@ export const messageCommandParser =
             throw new Error("Client user id not defined")
         }
 
+        let _prefix = (await getPrefix?.(request)) ?? prefix
+
         const prefixRegex = new RegexProvider(
             `^(?<prefix><@[!&]?${request.client.user.id}> ?${
-                prefix ? `|${escapeRegex(prefix)}` : ""
+                _prefix ? `|${escapeRegex(_prefix)}` : ""
             })(?<command>[A-z1-9]+)(?<rest>.*)`,
             "u",
         )

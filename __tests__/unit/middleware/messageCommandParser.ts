@@ -1,4 +1,4 @@
-import {Counter} from "../../utils"
+import {Awaiter} from "../../utils"
 import MockDiscord from "~/__mocks__/discord"
 import {createRequest} from "~/src/request"
 import {createResponse} from "~/src/response"
@@ -6,9 +6,9 @@ import messageCommandParser from "~/src/middleware/messageCommandParser"
 
 describe("messageCommandParser", () => {
     describe("parse command", () => {
-        test("should parse command with ping", () => {
+        test("should parse command with ping", async () => {
             const mockDiscord = new MockDiscord()
-            const counter = new Counter()
+            const awaiter = new Awaiter()
             const message = mockDiscord.mockMessage()
             const request = createRequest(message)
 
@@ -16,16 +16,17 @@ describe("messageCommandParser", () => {
 
             const middleware = messageCommandParser({prefix: "!"})
 
-            middleware(request, createResponse(message), counter.increment)
+            middleware(request, createResponse(message), awaiter.increment)
 
-            expect(counter.callCount).toBe(1)
+            await awaiter.wait(1000)
+
             expect(request.body).toMatchObject({_: []})
             expect(request.command[0]).toBe("myCommand")
         })
 
-        test("should parse command with prefix", () => {
+        test("should parse command with prefix", async () => {
             const mockDiscord = new MockDiscord()
-            const counter = new Counter()
+            const awaiter = new Awaiter()
             const message = mockDiscord.mockMessage({
                 content: "!myCommand123",
             })
@@ -33,9 +34,10 @@ describe("messageCommandParser", () => {
 
             const middleware = messageCommandParser({prefix: "!"})
 
-            middleware(request, createResponse(message), counter.increment)
+            middleware(request, createResponse(message), awaiter.increment)
 
-            expect(counter.callCount).toBe(1)
+            await awaiter.wait(1000)
+
             expect(request.body).toMatchObject({_: []})
             expect(request.command[0]).toBe("myCommand123")
         })
@@ -73,9 +75,9 @@ describe("messageCommandParser", () => {
             ],
         },
     ])("parsing $name", ({name, data}) => {
-        test.each(data)(`should parse command with ${name}`, (input, output) => {
+        test.each(data)(`should parse command with ${name}`, async (input, output) => {
             const mockDiscord = new MockDiscord()
-            const counter = new Counter()
+            const awaiter = new Awaiter()
             const message = mockDiscord.mockMessage({
                 content: `!myCommand2 ${input}`,
             })
@@ -83,10 +85,70 @@ describe("messageCommandParser", () => {
 
             const middleware = messageCommandParser({prefix: "!"})
 
-            middleware(request, createResponse(message), counter.increment)
+            middleware(request, createResponse(message), awaiter.increment)
 
-            expect(counter.callCount).toBe(1)
+            await awaiter.wait(1000)
+
             expect(request.body).toMatchObject(output)
+        })
+    })
+
+    describe("dynamic prefix", () => {
+        test("should use dynamic prefix", async () => {
+            const mockDiscord = new MockDiscord()
+            const awaiter = new Awaiter()
+            const message = mockDiscord.mockMessage({
+                content: `~myCommand2 --flag`,
+            })
+            const request = createRequest(message)
+
+            const middleware = messageCommandParser({prefix: "!", getPrefix: () => "~"})
+
+            middleware(request, createResponse(message), awaiter.increment)
+
+            await awaiter.wait(1000)
+
+            expect(request.body).toMatchObject({flag: true})
+        })
+
+        test("should use dynamic async prefix", async () => {
+            const mockDiscord = new MockDiscord()
+            const awaiter = new Awaiter()
+            const message = mockDiscord.mockMessage({
+                content: `myPrefix!myCommand2 item`,
+            })
+            const request = createRequest(message)
+
+            const middleware = messageCommandParser({
+                prefix: "!",
+                getPrefix: async () => Promise.resolve("myPrefix!"),
+            })
+
+            middleware(request, createResponse(message), awaiter.increment)
+
+            await awaiter.wait(1000)
+
+            expect(request.body).toMatchObject({_: ["item"]})
+        })
+
+        test("should use default prefix if getPrefix returns nullish", async () => {
+            const mockDiscord = new MockDiscord()
+            const awaiter = new Awaiter()
+            const message = mockDiscord.mockMessage({
+                content: `!myCommand2 --flag item`,
+            })
+            const request = createRequest(message)
+
+            const middleware = messageCommandParser({
+                prefix: "!",
+                getPrefix: async () => undefined,
+            })
+
+            middleware(request, createResponse(message), awaiter.increment)
+
+            await awaiter.wait(1000)
+
+            expect(request.body).toMatchObject({flag: "item"})
         })
     })
 })
