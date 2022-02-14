@@ -124,34 +124,37 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
         }
 
         const error: Ref<unknown> = {}
+        let didHandleError = false
         const request = createRequest(trigger)
         const response = createResponse(trigger)
         const stackIter = this._getStack(request, error)
 
         const nextFunction = async (err?: unknown): Promise<void> => {
-            // Avoid infinite error loop
-            const shouldCallNextOnError = error.current === undefined
-
             if (err) {
                 error.current = err
+                didHandleError = false
             }
 
             try {
                 const item = stackIter.next().value
 
                 if (!item) {
+                    if (error.current && !didHandleError) {
+                        console.error(error.current)
+                    }
+
                     return
                 } else if (item.type === "error") {
+                    didHandleError = true
                     await item.handler(error.current, request, response, nextFunction)
                 } else {
                     await (item.handler as DiscordExpressHandler)(request, response, nextFunction)
                 }
             } catch (_err) {
                 error.current = _err
+                didHandleError = false
 
-                if (shouldCallNextOnError) {
-                    await nextFunction()
-                }
+                await nextFunction()
             }
         }
 
