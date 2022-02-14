@@ -103,6 +103,14 @@ export class Awaiter extends Counter {
         })
     }
 
+    public resolveAll(): void {
+        for (const item of this._awaiterItems) {
+            item.resolve()
+        }
+
+        this._awaiterItems.length = 0
+    }
+
     private _resolveItems(): void {
         const indexesToPurge: number[] = []
 

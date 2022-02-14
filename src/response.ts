@@ -164,5 +164,7 @@ export class InteractionResponse extends BaseResponse {
 
 export {BaseResponse as Response}
 
-export const createResponse = (trigger: Message | CommandInteraction): BaseResponse =>
+export const createResponse = (
+    trigger: Message | CommandInteraction,
+): MessageResponse | InteractionResponse =>
     trigger instanceof Message ? new MessageResponse(trigger) : new InteractionResponse(trigger)

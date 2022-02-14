@@ -168,5 +168,7 @@ export class InteractionRequest<Body = unknown> extends BaseRequest<Body> {
 
 export {BaseRequest as Request}
 
-export const createRequest = (trigger: Message | CommandInteraction): BaseRequest =>
+export const createRequest = (
+    trigger: Message | CommandInteraction,
+): InteractionRequest | MessageRequest =>
     trigger instanceof Message ? new MessageRequest(trigger) : new InteractionRequest(trigger)

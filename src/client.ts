@@ -1,5 +1,6 @@
 import * as discord from "discord.js"
 import {type DiscordExpressErrorHandler, type DiscordExpressHandler} from "."
+import type {DiscordExpressInteractionCommandHandler, DiscordExpressMessageHandler} from "./types"
 import {type RESTPostAPIApplicationCommandsJSONBody, Routes} from "discord-api-types/v9"
 import {type Request, createRequest} from "./request"
 import {createResponse} from "./response"
@@ -12,10 +13,19 @@ export interface ClientOptions extends discord.ClientOptions {
 
 export type CommandArray = [command: string, subcommandGroup?: string, subcommand?: string]
 
+export type StackCommand =
+    | {type: "command"; command: CommandArray[]; handler: DiscordExpressHandler}
+    | {type: "messageCommand"; command: CommandArray[]; handler: DiscordExpressMessageHandler}
+    | {
+          type: "interactionCommand"
+          command: CommandArray[]
+          handler: DiscordExpressInteractionCommandHandler
+      }
+
 export type StackItem =
     | {type: "use"; handler: DiscordExpressHandler}
     | {type: "error"; handler: DiscordExpressErrorHandler}
-    | {type: "command"; command: CommandArray[]; handler: DiscordExpressHandler}
+    | StackCommand
 
 type Ref<T> = {current?: T}
 
@@ -71,21 +81,25 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
     }
 
     public command(commands: string | string[], ...handlers: DiscordExpressHandler[]): void {
-        const commandArray: CommandArray[] = []
-        commands = typeof commands === "string" ? [commands] : commands
-
-        for (const command of commands) {
-            commandArray.push(command.replace(/^\//u, "").split("/") as CommandArray)
-        }
-
-        for (const handler of handlers) {
-            this._stack.push({
-                type: "command",
-                command: commandArray,
-                handler,
-            })
-        }
+        this._addCommand("command", commands, ...handlers)
     }
+
+    public messageCommand(
+        commands: string | string[],
+        ...handlers: DiscordExpressMessageHandler[]
+    ): void {
+        this._addCommand("messageCommand", commands, ...handlers)
+    }
+
+    public interactioncommand(
+        commands: string | string[],
+        ...handlers: DiscordExpressInteractionCommandHandler[]
+    ): void {
+        this._addCommand("interactionCommand", commands, ...handlers)
+    }
+
+    /** @alias interactionCommand */
+    public slashCommand = this.interactioncommand
 
     public error(...handlers: DiscordExpressErrorHandler[]): void {
         for (const handler of handlers) {
@@ -130,7 +144,7 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
                 } else if (item.type === "error") {
                     await item.handler(error.current, request, response, nextFunction)
                 } else {
-                    await item.handler(request, response, nextFunction)
+                    await (item.handler as DiscordExpressHandler)(request, response, nextFunction)
                 }
             } catch (_err) {
                 error.current = _err
@@ -170,11 +184,50 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
                             }
                         }
                         break
+                    case "messageCommand":
+                        if (request.requestType === "message") {
+                            for (const commandArray of stackItem.command) {
+                                if (matchCommand(commandArray, request)) {
+                                    yield stackItem
+                                }
+                            }
+                        }
+                        break
+                    case "interactionCommand":
+                        if (request.requestType === "interaction") {
+                            for (const commandArray of stackItem.command) {
+                                if (matchCommand(commandArray, request)) {
+                                    yield stackItem
+                                }
+                            }
+                        }
+                        break
                 }
             }
         }
 
         return
+    }
+
+    private _addCommand(
+        type: StackCommand["type"],
+        commands: string | string[],
+        ...handlers: StackCommand["handler"][]
+    ): void {
+        const commandArray: CommandArray[] = []
+        commands = typeof commands === "string" ? [commands] : commands
+
+        for (const command of commands) {
+            commandArray.push(command.replace(/^\//u, "").split("/") as CommandArray)
+        }
+
+        for (const handler of handlers) {
+            this._stack.push({
+                type,
+                command: commandArray,
+                handler,
+            } as StackItem)
+        }
     }
 }
 
