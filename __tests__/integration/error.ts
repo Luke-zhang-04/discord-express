@@ -40,6 +40,65 @@ describe("test thrown error", () => {
     })
 })
 
+describe("test error in specific route", () => {
+    const mockDiscord = new MockDiscord()
+    const {client} = mockDiscord
+
+    client.initExpress()
+
+    client.use(...middleware.recommended())
+    client.use(middleware.messageCommandParser({prefix: "!"}))
+
+    client.use(async () => {
+        await Promise.resolve()
+
+        awaiter.call()
+
+        throw new Error("test error")
+    })
+
+    client.error("myCommand", async () => {
+        await Promise.resolve()
+
+        awaiter.call()
+    })
+
+    test("should handle errors", async () => {
+        const interaction = mockDiscord.mockCommandInteraction(undefined, {
+            name: "myCommand",
+        })
+
+        const wait = awaiter.waitFor(2, 1000)
+
+        client.emit("interactionCreate", interaction)
+
+        await wait
+    })
+
+    test("should handle errors", async () => {
+        let output = ""
+        const consoleError = console.error
+
+        console.error = (...data: unknown[]): void => {
+            output += data.join(" ")
+        }
+
+        const interaction = mockDiscord.mockCommandInteraction(undefined, {
+            name: "myOtherCommand",
+        })
+
+        const wait = awaiter.wait(1000)
+
+        client.emit("interactionCreate", interaction)
+
+        await wait
+
+        expect(output).toBe("Error: test error")
+
+        console.error = consoleError
+    })
+})
+
 describe("test next error", () => {
     const mockDiscord = new MockDiscord()
     const {client} = mockDiscord

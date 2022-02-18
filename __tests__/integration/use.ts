@@ -8,7 +8,7 @@ afterEach(() => {
     awaiter.reset()
 })
 
-describe("test message command handler", () => {
+describe("test use", () => {
     const mockDiscord = new MockDiscord()
     const {client} = mockDiscord
 
@@ -17,18 +17,13 @@ describe("test message command handler", () => {
     client.use(...middleware.recommended())
     client.use(middleware.messageCommandParser({prefix: "!"}))
 
-    client.interactioncommand("myCommand", (request) => {
-        expect(request.requestType).toBe("interaction")
+    client.use("myCommand", () => {
         awaiter.call()
     })
 
-    client.use(() => {
-        awaiter.resolveAll()
-    })
-
-    test("should call handler with slash command", async () => {
+    test("should pass slash command down middleware chain", async () => {
         const interaction = mockDiscord.mockCommandInteraction(undefined, {
-            name: "myCommand",
+            name: "my-command",
         })
 
         const wait = awaiter.wait(1000)
@@ -36,21 +31,27 @@ describe("test message command handler", () => {
         client.emit("interactionCreate", interaction)
 
         await wait
-
-        expect(awaiter.count).toBe(1)
     })
 
-    test("should not call handler with message command", async () => {
-        const message = mockDiscord.mockMessage({
+    test("should pass message command down middleware chain", async () => {
+        const interaction = mockDiscord.mockMessage({
             content: "!myCommand",
         })
 
         const wait = awaiter.wait(1000)
 
-        client.emit("messageCreate", message)
+        client.emit("messageCreate", interaction)
 
         await wait
+    })
 
-        expect(awaiter.count).toBe(0)
+    test("should not pass normal message down middleware chain", async () => {
+        const interaction = mockDiscord.mockMessage({
+            content: "myCommand",
+        })
+
+        client.emit("messageCreate", interaction)
+
+        expect(awaiter.callCount).toBe(0)
     })
 })

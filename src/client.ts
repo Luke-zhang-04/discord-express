@@ -8,6 +8,7 @@ import fetch from "node-fetch"
 import {matchCommand} from "./commandMatcher"
 
 export interface ClientOptions extends discord.ClientOptions {
+    /** Authentication token */
     authToken?: string
 }
 
@@ -23,12 +24,16 @@ export type StackCommand =
       }
 
 export type StackItem =
-    | {type: "use"; handler: DiscordExpressHandler}
-    | {type: "error"; handler: DiscordExpressErrorHandler}
+    | {type: "use"; command?: CommandArray[]; handler: DiscordExpressHandler}
+    | {type: "error"; command?: CommandArray[]; handler: DiscordExpressErrorHandler}
     | StackCommand
 
 type Ref<T> = {current?: T}
 
+/**
+ * An extension of the default Discord.js `Client` class that includes methods for the
+ * middleware-like command system
+ */
 export class Client<Ready extends boolean = boolean> extends discord.Client<Ready> {
     /** @alias interactionCommand */
     public slashCommand = this.interactioncommand
@@ -76,33 +81,53 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
         return await response.json()
     }
 
-    public use(...handlers: DiscordExpressHandler[]): void {
-        for (const handler of handlers) {
-            this._stack.push({type: "use", handler})
+    public use(...handlers: DiscordExpressHandler[]): void
+    public use(routes: string | string[], ...handlers: DiscordExpressHandler[]): void
+
+    public use(
+        routesOrHandler: string | string[] | DiscordExpressHandler,
+        ...handlers: DiscordExpressHandler[]
+    ): void {
+        if (typeof routesOrHandler === "function") {
+            for (const handler of [routesOrHandler, ...handlers]) {
+                this._stack.push({type: "use", handler})
+            }
+        } else {
+            this._addItem("use", routesOrHandler, handlers)
         }
     }
 
     public command(commands: string | string[], ...handlers: DiscordExpressHandler[]): void {
-        this._addCommand("command", commands, ...handlers)
+        this._addItem("command", commands, handlers)
     }
 
     public messageCommand(
         commands: string | string[],
         ...handlers: DiscordExpressMessageHandler[]
     ): void {
-        this._addCommand("messageCommand", commands, ...handlers)
+        this._addItem("messageCommand", commands, handlers)
     }
 
     public interactioncommand(
         commands: string | string[],
         ...handlers: DiscordExpressInteractionCommandHandler[]
     ): void {
-        this._addCommand("interactionCommand", commands, ...handlers)
+        this._addItem("interactionCommand", commands, handlers)
     }
 
-    public error(...handlers: DiscordExpressErrorHandler[]): void {
-        for (const handler of handlers) {
-            this._stack.push({type: "error", handler})
+    public error(...handlers: DiscordExpressErrorHandler[]): void
+    public error(routes: string | string[], ...handlers: DiscordExpressErrorHandler[]): void
+
+    public error(
+        routesOrHandler: string | string[] | DiscordExpressErrorHandler,
+        ...handlers: DiscordExpressErrorHandler[]
+    ): void {
+        if (typeof routesOrHandler === "function") {
+            for (const handler of [routesOrHandler, ...handlers]) {
+                this._stack.push({type: "error", handler})
+            }
+        } else {
+            this._addItem("error", routesOrHandler, handlers)
         }
     }
 
@@ -172,12 +197,28 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
 
             if (errorRef.current) {
                 if (stackItem.type === "error") {
-                    yield stackItem
+                    if (stackItem.command) {
+                        for (const commandArray of stackItem.command) {
+                            if (matchCommand(commandArray, request)) {
+                                yield stackItem
+                            }
+                        }
+                    } else {
+                        yield stackItem
+                    }
                 }
             } else {
                 switch (stackItem.type) {
                     case "use":
-                        yield stackItem
+                        if (stackItem.command) {
+                            for (const commandArray of stackItem.command) {
+                                if (matchCommand(commandArray, request)) {
+                                    yield stackItem
+                                }
+                            }
+                        } else {
+                            yield stackItem
+                        }
                         break
                     case "command":
                         for (const commandArray of stackItem.command) {
@@ -211,15 +252,15 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
         return
     }
 
-    private _addCommand(
-        type: StackCommand["type"],
+    private _addItem(
+        type: StackItem["type"],
         commands: string | string[],
-        ...handlers: StackCommand["handler"][]
+        handlers: StackItem["handler"][],
     ): void {
         const commandArray: CommandArray[] = []
-        commands = typeof commands === "string" ? [commands] : commands
+        const arrCommands = typeof commands === "string" ? [commands] : commands
 
-        for (const command of commands) {
+        for (const command of arrCommands) {
             commandArray.push(command.replace(/^\//u, "").split("/") as CommandArray)
         }
 
