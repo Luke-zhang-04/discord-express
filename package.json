@@ -6,6 +6,9 @@
   "author": "",
   "main": "lib/index.js",
   "type": "module",
+  "engines": {
+    "node": ">=16.6"
+  },
   "scripts": {
     "lint": "eslint --ext ts src __mocks__ __tests__",
     "test": "node --experimental-vm-modules --es-module-specifier-resolution=node node_modules/jest/bin/jest.js"

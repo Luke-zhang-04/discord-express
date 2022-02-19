@@ -11,7 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: [12.x, 14.x, 17.x]
+        node:
+          - 16.6 # Minimum Node version for DiscordJS
+          - 17.x # Test latest Node
 
     steps:
       - name: Checkout Repo
