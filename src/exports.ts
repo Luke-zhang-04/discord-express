@@ -1,3 +1,4 @@
+export * as builtins from "./builtins"
 export * as middleware from "./middleware"
 export {
     type DiscordExpressHandler,

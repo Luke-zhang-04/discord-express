@@ -1,4 +1,5 @@
 import {type APIApplicationCommandChannelOption} from "discord-api-types/v9"
+import {type EmbedFieldData} from "discord.js"
 import {isObject} from "@luke-zhang-04/utils"
 
 export enum OptionTypes {
@@ -149,11 +150,26 @@ export type OtherOption = Option<
 
 export interface Command {
     description: string
+    /** Optional long description for a help message */
+    longDescription?: string
+    /** Define any custom fields you want for a help message */
+    helpFields?: EmbedFieldData[]
     options?: {[name: string]: StringOption | NumericOption | ChannelOption | OtherOption}
 }
 
+export const isCommand = (obj: unknown): obj is Command =>
+    isObject(obj) &&
+    typeof obj.description === "string" &&
+    (typeof obj.options === "object" || obj.options === undefined) &&
+    obj.commands === undefined &&
+    obj.subcommands === undefined
+
 export interface Subcommand {
     description: string
+    /** Optional long description for a help message */
+    longDescription?: string
+    /** Define any custom fields you want for a help message */
+    helpFields?: EmbedFieldData[]
     commands: {[commandName: string]: Command}
 }
 
@@ -162,6 +178,10 @@ export const isSubcommand = (obj: unknown): obj is Subcommand =>
 
 export interface SubcommandGroup {
     description: string
+    /** Optional long description for a help message */
+    longDescription?: string
+    /** Define any custom fields you want for a help message */
+    helpFields?: EmbedFieldData[]
     subcommands: {
         [subcommandName: string]: Subcommand
     }
