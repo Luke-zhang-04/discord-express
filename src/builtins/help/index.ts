@@ -42,11 +42,11 @@ export const defaultMatcher = <T>(
     }
 
     if (val === undefined) {
-        for (const [key2, val] of objectEntries(obj)) {
+        for (const [key2, val2] of objectEntries(obj)) {
             const lowercaseKey2 = key2.toLowerCase()
 
             if (lowercaseKey2 === key) {
-                return [key2, val]
+                return [key2, val2]
             }
         }
     }

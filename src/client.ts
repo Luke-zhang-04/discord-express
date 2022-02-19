@@ -1,14 +1,15 @@
 import * as discord from "discord.js"
 import {type DiscordExpressErrorHandler, type DiscordExpressHandler} from "."
 import type {DiscordExpressInteractionCommandHandler, DiscordExpressMessageHandler} from "./types"
-import {type RESTPostAPIApplicationCommandsJSONBody, Routes} from "discord-api-types/v9"
-import {type Request, createRequest} from "./request"
 import {
+    type InteractionResponse,
+    type MessageResponse,
     type Response,
     createResponse,
-    type MessageResponse,
-    type InteractionResponse,
 } from "./response"
+import {type RESTPostAPIApplicationCommandsJSONBody, Routes} from "discord-api-types/v9"
+import {type Request, createRequest} from "./request"
+
 import fetch from "node-fetch"
 import {matchCommand} from "./commandMatcher"
 
@@ -165,6 +166,7 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
         const error: Ref<{error: unknown; didHandle: boolean}> = {}
         const request = createRequest(trigger)
         const response = createResponse(trigger)
+        // eslint-disable-next-line prefer-const
         let stackIter:
             | AsyncGenerator<undefined | unknown, undefined, undefined | unknown>
             | undefined
@@ -192,6 +194,7 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
         await nextFunction()
     }
 
+    // eslint-disable-next-line max-statements
     private async *_getStack(
         request: Request,
         response: Response,
@@ -216,6 +219,7 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
                                 const err = await inlineTryPromise(
                                     async () =>
                                         await stackItem.handler(
+                                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                                             errorRef.current!.error,
                                             ...params,
                                         ),
@@ -233,6 +237,7 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
 
                         yield await inlineTryPromise(
                             async () =>
+                                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                                 await stackItem.handler(errorRef.current!.error, ...params),
                         )
                     }
