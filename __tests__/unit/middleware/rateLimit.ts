@@ -36,7 +36,7 @@ describe("rateLimit", () => {
         ["guild", "mockGuild"],
         ["channel", "mockGuildChannel"],
         ["user", "mockUser"],
-        [(request: import("~/src").Request) => request.guildId!, "mockGuild"],
+        [(request: import("~/src").Request) => request.guildId as string, "mockGuild"],
     ] as const)("should rate limit by %s", async (rateLimitBy, mockProp) => {
         const mockDiscord = new MockDiscord()
         const awaiter = new Awaiter()

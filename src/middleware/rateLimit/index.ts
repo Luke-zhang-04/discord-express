@@ -6,7 +6,7 @@
  * @see https://github.com/nfriedly/express-rate-limit
  */
 
-import {type Store, MemoryStore} from "./store"
+import {MemoryStore, type Store} from "./store"
 import type {Request, Response} from "../.."
 import {type DiscordExpressHandler} from "../.."
 import {type MaybePromise} from "@luke-zhang-04/utils"

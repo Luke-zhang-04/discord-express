@@ -1,19 +1,19 @@
 import * as zod from "zod"
 import {
+    type BaseMessageComponentOptions,
+    type MessageActionRow,
+    type MessageActionRowOptions,
     MessageEmbed,
     type MessageEmbedOptions,
-    type MessageActionRow,
-    type BaseMessageComponentOptions,
-    type MessageActionRowOptions,
 } from "discord.js"
 import {
     Command,
     Commands,
+    Subcommand,
+    SubcommandGroup,
     isCommand,
     isSubcommand,
     isSubcommandGroup,
-    Subcommand,
-    SubcommandGroup,
 } from "../commands/types"
 import Case from "case"
 import {CommandArray} from "../client"
@@ -38,14 +38,14 @@ const _generateTopLevelHelp = (
                 return {
                     name,
                     value: `${entry.description}\nsubcommands: ${Object.keys(entry.subcommands)
-                        .map((name) => `\`${name}\``)
+                        .map((subcommandName) => `\`${subcommandName}\``)
                         .join(", ")}`,
                 }
             } else if (isSubcommand(entry)) {
                 return {
                     name,
                     value: `${entry.description}\ncommands: ${Object.keys(entry.commands)
-                        .map((name) => `\`${name}\``)
+                        .map((commandName) => `\`${commandName}\``)
                         .join(", ")}`,
                 }
             }
@@ -173,6 +173,8 @@ export interface HelpOptions {
         defaultData: MessageEmbedOptions,
     ) => MessageEmbed
 }
+
+/* eslint-disable max-statements */
 
 /**
  * Help is a built in help command you can use

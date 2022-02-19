@@ -45,7 +45,7 @@ describe("test basic application", () => {
         await wait
     })
 
-    test("should not pass normal message down middleware chain", async () => {
+    test("should not pass normal message down middleware chain", () => {
         const interaction = mockDiscord.mockMessage({
             content: "myCommand",
         })

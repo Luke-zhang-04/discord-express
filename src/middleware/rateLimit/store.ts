@@ -97,7 +97,7 @@ export class MemoryStore implements Store {
      * @returns {IncrementResponse} - The number of hits and reset time for that client.
      * @public
      */
-    async increment(key: string): Promise<IncrementResponse> {
+    public increment(key: string): IncrementResponse {
         const totalHits = (this.hits[key] ?? 0) + 1
         this.hits[key] = totalHits
 
@@ -113,7 +113,7 @@ export class MemoryStore implements Store {
      * @param key {string} - The identifier for a client.
      * @public
      */
-    async decrement(key: string): Promise<void> {
+    public decrement(key: string): void {
         const current = this.hits[key]
         if (current) {
             this.hits[key] = current - 1
@@ -126,7 +126,7 @@ export class MemoryStore implements Store {
      * @param key {string} - The identifier for a client.
      * @public
      */
-    async resetKey(key: string): Promise<void> {
+    public resetKey(key: string): void {
         delete this.hits[key]
     }
 
@@ -135,7 +135,7 @@ export class MemoryStore implements Store {
      *
      * @public
      */
-    async resetAll(): Promise<void> {
+    public resetAll(): void {
         this.hits = {}
         this.resetTime = calculateNextResetTime(this.windowMs)
     }
