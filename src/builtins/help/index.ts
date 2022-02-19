@@ -1,3 +1,4 @@
+import * as generators from "./generators"
 import * as zod from "zod"
 import {
     type BaseMessageComponentOptions,
@@ -14,10 +15,10 @@ import {
     isCommand,
     isSubcommand,
     isSubcommandGroup,
-} from "../commands/types"
+} from "../../commands/types"
 import Case from "case"
-import {CommandArray} from "../client"
-import {type DiscordExpressHandler} from ".."
+import {CommandArray} from "../../client"
+import {type DiscordExpressHandler} from "../.."
 
 const slashCommandHelpShema = zod.object({
     command: zod.string().optional(),
@@ -26,103 +27,6 @@ const slashCommandHelpShema = zod.object({
 const messageCommandHelpShema = zod.object({
     _: zod.array(zod.string()),
 })
-
-const _generateTopLevelHelp = (
-    commands: Commands,
-    defaultData: MessageEmbedOptions,
-): MessageEmbed =>
-    new MessageEmbed({
-        ...defaultData,
-        fields: Object.entries(commands).map(([name, entry]) => {
-            if (isSubcommandGroup(entry)) {
-                return {
-                    name,
-                    value: `${entry.description}\nsubcommands: ${Object.keys(entry.subcommands)
-                        .map((subcommandName) => `\`${subcommandName}\``)
-                        .join(", ")}`,
-                }
-            } else if (isSubcommand(entry)) {
-                return {
-                    name,
-                    value: `${entry.description}\ncommands: ${Object.keys(entry.commands)
-                        .map((commandName) => `\`${commandName}\``)
-                        .join(", ")}`,
-                }
-            }
-            return {
-                name,
-                value: entry.description,
-            }
-        }),
-    })
-
-const _generateSubcommandGroupHelp = (
-    subcommandGroup: SubcommandGroup,
-    defaultData: MessageEmbedOptions,
-): MessageEmbed =>
-    new MessageEmbed({
-        ...defaultData,
-        description: `${subcommandGroup.description}\n\n${subcommandGroup.longDescription ?? ""}`,
-        fields: [
-            {
-                name: "Subcommands",
-                value:
-                    Object.entries(subcommandGroup.subcommands ?? {})
-                        .map(([name, {description}]) => `\`${name}\` - ${description}`)
-                        .join("\n") || "none",
-            },
-            ...(subcommandGroup.helpFields ?? []),
-        ],
-    })
-
-const _generateSubcommandHelp = (
-    subcommand: Subcommand,
-    defaultData: MessageEmbedOptions,
-): MessageEmbed =>
-    new MessageEmbed({
-        ...defaultData,
-        description: `${subcommand.description}\n\n${subcommand.longDescription ?? ""}`,
-        fields: [
-            {
-                name: "Commands",
-                value:
-                    Object.entries(subcommand.commands ?? {})
-                        .map(([name, {description}]) => `\`${name}\` - ${description}`)
-                        .join("\n") || "none",
-            },
-            ...(subcommand.helpFields ?? []),
-        ],
-    })
-
-const _generateCommandHelp = (command: Command, defaultData: MessageEmbedOptions): MessageEmbed =>
-    new MessageEmbed({
-        ...defaultData,
-        description: `${command.description}\n\n${command.longDescription ?? ""}`,
-        fields: [
-            {
-                name: "Options",
-                value:
-                    Object.entries(command.options ?? {})
-                        .sort(([, {required}], [, {required: required2}]) => {
-                            if (required === required2) {
-                                return 0
-                            } else if (required) {
-                                return -1
-                            }
-
-                            return 1
-                        })
-                        .map(
-                            ([name, {description, required}]) =>
-                                `\`${name}\` - ${
-                                    required ? "required" : "optional"
-                                } - ${description}`,
-                        )
-                        .join("\n") || "none",
-            },
-            ...(command.helpFields ?? []),
-        ],
-    })
 
 export interface HelpOptions {
     /** Commands to give help for. Only supports discord-express command object */
@@ -207,10 +111,10 @@ export const help =
         footerText,
         title,
         components = [],
-        generateTopLevelHelp = _generateTopLevelHelp,
-        generateCommandHelp = _generateCommandHelp,
-        generateSubcommandHelp = _generateSubcommandHelp,
-        generateSubcommandGroupHelp = _generateSubcommandGroupHelp,
+        generateTopLevelHelp = generators.generateTopLevelHelp,
+        generateCommandHelp = generators.generateCommandHelp,
+        generateSubcommandHelp = generators.generateSubcommandHelp,
+        generateSubcommandGroupHelp = generators.generateSubcommandGroupHelp,
         ...rest
     }: HelpOptions): DiscordExpressHandler =>
     async (request, response) => {
