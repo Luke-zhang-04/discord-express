@@ -81,13 +81,14 @@ describe("test error in specific route", () => {
 
         console.error = (...data: unknown[]): void => {
             output += data.join(" ")
+            awaiter.increment()
         }
 
         const interaction = mockDiscord.mockCommandInteraction(undefined, {
             name: "myOtherCommand",
         })
 
-        const wait = awaiter.wait(1000)
+        const wait = awaiter.waitFor(2, 1000)
 
         client.emit("interactionCreate", interaction)
 
@@ -195,11 +196,12 @@ describe("test error in last error handler", () => {
 
         console.error = (...data: unknown[]): void => {
             output += data.join(" ")
+            awaiter.increment()
         }
 
         const interaction = mockDiscord.mockCommandInteraction()
 
-        const wait = awaiter.wait(1000)
+        const wait = awaiter.waitFor(2, 1000)
 
         client.emit("interactionCreate", interaction)
 

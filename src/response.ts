@@ -162,7 +162,8 @@ export class InteractionResponse extends BaseResponse {
     }
 }
 
-export {BaseResponse as Response}
+// export {BaseResponse as Response}
+export type Response = MessageResponse | InteractionResponse
 
 export const createResponse = (
     trigger: Message | CommandInteraction,

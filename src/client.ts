@@ -3,9 +3,24 @@ import {type DiscordExpressErrorHandler, type DiscordExpressHandler} from "."
 import type {DiscordExpressInteractionCommandHandler, DiscordExpressMessageHandler} from "./types"
 import {type RESTPostAPIApplicationCommandsJSONBody, Routes} from "discord-api-types/v9"
 import {type Request, createRequest} from "./request"
-import {createResponse} from "./response"
+import {
+    type Response,
+    createResponse,
+    type MessageResponse,
+    type InteractionResponse,
+} from "./response"
 import fetch from "node-fetch"
 import {matchCommand} from "./commandMatcher"
+
+const inlineTryPromise = async <T>(func: () => Promise<T>): Promise<unknown> => {
+    try {
+        await func()
+
+        return undefined
+    } catch (err) {
+        return err
+    }
+}
 
 export interface ClientOptions extends discord.ClientOptions {
     /** Authentication token */
@@ -147,48 +162,44 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
             }
         }
 
-        const error: Ref<unknown> = {}
-        let didHandleError = false
+        const error: Ref<{error: unknown; didHandle: boolean}> = {}
         const request = createRequest(trigger)
         const response = createResponse(trigger)
-        const stackIter = this._getStack(request, error)
+        let stackIter:
+            | AsyncGenerator<undefined | unknown, undefined, undefined | unknown>
+            | undefined
 
         const nextFunction = async (err?: unknown): Promise<void> => {
             if (err) {
-                error.current = err
-                didHandleError = false
+                error.current = {error: err, didHandle: false}
             }
 
             try {
-                const item = stackIter.next().value
+                const _err = (await stackIter?.next())?.value
 
-                if (!item) {
-                    if (error.current && !didHandleError) {
-                        console.error(error.current)
-                    }
-
-                    return
-                } else if (item.type === "error") {
-                    didHandleError = true
-                    await item.handler(error.current, request, response, nextFunction)
-                } else {
-                    await (item.handler as DiscordExpressHandler)(request, response, nextFunction)
+                if (_err) {
+                    await nextFunction(_err)
+                } else if (error.current?.didHandle === false) {
+                    console.error(error.current.error)
                 }
             } catch (_err) {
-                error.current = _err
-                didHandleError = false
-
-                await nextFunction()
+                await nextFunction(_err)
             }
         }
+
+        stackIter = this._getStack(request, response, nextFunction, error)
 
         await nextFunction()
     }
 
-    private *_getStack(
+    private async *_getStack(
         request: Request,
-        errorRef: Ref<unknown>,
-    ): Generator<StackItem, undefined, StackItem> {
+        response: Response,
+        nextFunction: (err?: unknown) => Promise<void>,
+        errorRef: Ref<{error: unknown; didHandle: boolean}>,
+    ): AsyncGenerator<undefined | unknown, undefined, undefined | unknown> {
+        const params = [request, response, nextFunction] as const
+
         // Use index loop for performance
         // eslint-disable-next-line @typescript-eslint/prefer-for-of
         for (let index = 0; index < this._stack.length; index++) {
@@ -200,11 +211,30 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
                     if (stackItem.command) {
                         for (const commandArray of stackItem.command) {
                             if (matchCommand(commandArray, request)) {
-                                yield stackItem
+                                errorRef.current.didHandle = true
+
+                                const err = await inlineTryPromise(
+                                    async () =>
+                                        await stackItem.handler(
+                                            errorRef.current!.error,
+                                            ...params,
+                                        ),
+                                )
+
+                                yield err
+
+                                if (err) {
+                                    break
+                                }
                             }
                         }
                     } else {
-                        yield stackItem
+                        errorRef.current.didHandle = true
+
+                        yield await inlineTryPromise(
+                            async () =>
+                                await stackItem.handler(errorRef.current!.error, ...params),
+                        )
                     }
                 }
             } else {
@@ -213,17 +243,35 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
                         if (stackItem.command) {
                             for (const commandArray of stackItem.command) {
                                 if (matchCommand(commandArray, request)) {
-                                    yield stackItem
+                                    const err = await inlineTryPromise(
+                                        async () => await stackItem.handler(...params),
+                                    )
+
+                                    yield err
+
+                                    if (err) {
+                                        break
+                                    }
                                 }
                             }
                         } else {
-                            yield stackItem
+                            yield await inlineTryPromise(
+                                async () => await stackItem.handler(...params),
+                            )
                         }
                         break
                     case "command":
                         for (const commandArray of stackItem.command) {
                             if (matchCommand(commandArray, request)) {
-                                yield stackItem
+                                const err = await inlineTryPromise(
+                                    async () => await stackItem.handler(...params),
+                                )
+
+                                yield err
+
+                                if (err) {
+                                    break
+                                }
                             }
                         }
                         break
@@ -231,7 +279,20 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
                         if (request.requestType === "message") {
                             for (const commandArray of stackItem.command) {
                                 if (matchCommand(commandArray, request)) {
-                                    yield stackItem
+                                    const err = await inlineTryPromise(
+                                        async () =>
+                                            await stackItem.handler(
+                                                request,
+                                                response as MessageResponse,
+                                                nextFunction,
+                                            ),
+                                    )
+
+                                    yield err
+
+                                    if (err) {
+                                        break
+                                    }
                                 }
                             }
                         }
@@ -240,7 +301,20 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
                         if (request.requestType === "interaction") {
                             for (const commandArray of stackItem.command) {
                                 if (matchCommand(commandArray, request)) {
-                                    yield stackItem
+                                    const err = await inlineTryPromise(
+                                        async () =>
+                                            await stackItem.handler(
+                                                request,
+                                                response as InteractionResponse,
+                                                nextFunction,
+                                            ),
+                                    )
+
+                                    yield err
+
+                                    if (err) {
+                                        break
+                                    }
                                 }
                             }
                         }
