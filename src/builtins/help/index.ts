@@ -16,9 +16,10 @@ import {
     isSubcommand,
     isSubcommandGroup,
 } from "../../commands/types"
+import {type DiscordExpressHandler, type Request} from "../.."
 import Case from "case"
 import {CommandArray} from "../../client"
-import {type DiscordExpressHandler} from "../.."
+import {objectEntries} from "@luke-zhang-04/utils"
 
 const slashCommandHelpShema = zod.object({
     command: zod.string().optional(),
@@ -27,6 +28,39 @@ const slashCommandHelpShema = zod.object({
 const messageCommandHelpShema = zod.object({
     _: zod.array(zod.string()),
 })
+
+export const defaultMatcher = <T>(
+    obj: {[key: string]: T},
+    key: string,
+): [trueKey: string, value?: T] => {
+    let trueKey = key
+    let val = obj[key]
+
+    if (val === undefined) {
+        trueKey = Case.camel(key)
+        val = obj[Case.camel(key)]
+    }
+
+    if (val === undefined) {
+        for (const [key2, val] of objectEntries(obj)) {
+            const lowercaseKey2 = key2.toLowerCase()
+
+            if (lowercaseKey2 === key) {
+                return [key2, val]
+            }
+        }
+    }
+
+    return val === undefined ? [key] : [trueKey, val]
+}
+
+/**
+ * Matcher type that takes an object and a key, and returns a key value pair if the matcher finds a
+ * match. Can be used to implement a fuzzy search
+ *
+ * @returns A tuple with the real key of the item, and the value
+ */
+export type Matcher = typeof defaultMatcher
 
 export interface HelpOptions {
     /** Commands to give help for. Only supports discord-express command object */
@@ -60,22 +94,41 @@ export interface HelpOptions {
     )[]
 
     /** Custom embed generator to show top-level help */
-    generateTopLevelHelp?: (commands: Commands, defaultData: MessageEmbedOptions) => MessageEmbed
+    generateTopLevelHelp?: (
+        commands: Commands,
+        request: Request,
+        defaultData: MessageEmbedOptions,
+    ) => MessageEmbed
 
     /** Custom embed generator to show help for a specific command */
-    generateCommandHelp?: (command: Command, defaultData: MessageEmbedOptions) => MessageEmbed
+    generateCommandHelp?: (
+        commandArray: [string, string?, string?],
+        command: Command,
+        request: Request,
+        defaultData: MessageEmbedOptions,
+    ) => MessageEmbed
 
     /** Custom embed generator to show help for a specific subcommand */
     generateSubcommandHelp?: (
+        commandArray: [string, string?],
         subcommand: Subcommand,
+        request: Request,
         defaultData: MessageEmbedOptions,
     ) => MessageEmbed
 
     /** Custom embed generator to show help for a specific subcommand group */
     generateSubcommandGroupHelp?: (
+        commandArray: [string],
         subcommandGroup: SubcommandGroup,
+        request: Request,
         defaultData: MessageEmbedOptions,
     ) => MessageEmbed
+
+    /**
+     * Custom command matcher. The default matcher accounts for direct matches, camelCase matches,
+     * and uncapitalized matches.
+     */
+    matcher?: Matcher
 }
 
 /* eslint-disable max-statements */
@@ -115,6 +168,7 @@ export const help =
         generateCommandHelp = generators.generateCommandHelp,
         generateSubcommandHelp = generators.generateSubcommandHelp,
         generateSubcommandGroupHelp = generators.generateSubcommandGroupHelp,
+        matcher = defaultMatcher,
         ...rest
     }: HelpOptions): DiscordExpressHandler =>
     async (request, response) => {
@@ -140,9 +194,6 @@ export const help =
                     : "/help command: specifier"
             }\` to get help on a specific command`,
             ...rest,
-            title:
-                title ||
-                (specifier ? `Help for \`${specifier.join(" ")}\`` : `Help for \`${username}\``),
             timestamp: new Date(),
             footer: {
                 text: footerText,
@@ -164,20 +215,17 @@ export const help =
         if (specifier === undefined) {
             return await response.replyEphemeral({
                 ...defaultSendData,
-                embeds: [generateTopLevelHelp(commands, defaultEmbedData)],
+                embeds: [generateTopLevelHelp(commands, request, defaultEmbedData)],
             })
         } else if (specifier[2] !== undefined && specifier[1] !== undefined) {
-            const [subcommandGroupName, subcommandName, commandName] = specifier
-
-            const subcommandGroup =
-                commands[subcommandGroupName] ?? commands[Case.camel(subcommandGroupName)]
+            const [subcommandGroupName, subcommandGroup] = matcher(commands, specifier[0])
 
             if (!isSubcommandGroup(subcommandGroup)) {
                 return await response.replyEphemeral({
                     fallback,
                     content: `Error: \`${subcommandGroupName}\` is not a subcommand group`,
                     embeds: [
-                        generateTopLevelHelp(commands, {
+                        generateTopLevelHelp(commands, request, {
                             ...defaultEmbedData,
                             title: title || `Help for \`${username}\``,
                         }),
@@ -185,58 +233,77 @@ export const help =
                 })
             }
 
-            const subcommand =
-                subcommandGroup.subcommands[subcommandName] ??
-                subcommandGroup.subcommands[Case.camel(subcommandName)]
+            const [subcommandName, subcommand] = matcher(subcommandGroup.subcommands, specifier[1])
 
             if (!isSubcommand(subcommand)) {
                 return await response.replyEphemeral({
                     fallback,
                     content: `Error: \`${subcommandName}\` is not a subcommand`,
                     embeds: [
-                        generateSubcommandGroupHelp(subcommandGroup, {
-                            ...defaultEmbedData,
-                            title: title || `Help for \`${subcommandGroupName}\``,
-                        }),
+                        generateSubcommandGroupHelp(
+                            [subcommandGroupName],
+                            subcommandGroup,
+                            request,
+                            {
+                                ...defaultEmbedData,
+                                title: title || `Help for \`${subcommandGroupName}\``,
+                            },
+                        ),
                     ],
                 })
             }
 
-            const command =
-                subcommand.commands[commandName] ?? subcommand.commands[Case.camel(commandName)]
+            const [commandName, command] = matcher(subcommand.commands, specifier[2])
 
             if (!isCommand(command)) {
                 return await response.replyEphemeral({
                     fallback,
                     content: `Error: \`${commandName}\` is not a command`,
                     embeds: [
-                        generateSubcommandHelp(subcommand, {
-                            ...defaultEmbedData,
-                            title:
-                                title || `Help for \`${subcommandGroupName} ${subcommandName}\``,
-                        }),
+                        generateSubcommandHelp(
+                            [subcommandName, commandName],
+                            subcommand,
+                            request,
+                            {
+                                ...defaultEmbedData,
+                                title:
+                                    title ||
+                                    `Help for \`${subcommandGroupName} ${subcommandName}\``,
+                            },
+                        ),
                     ],
                 })
             }
 
             return await response.replyEphemeral({
                 fallback,
-                embeds: [generateCommandHelp(command, defaultEmbedData)],
+                embeds: [
+                    generateCommandHelp(
+                        [subcommandGroupName, subcommandName, commandName],
+                        command,
+                        request,
+                        defaultEmbedData,
+                    ),
+                ],
             })
         } else if (specifier[1] !== undefined) {
-            const [subcommandName, commandName] = specifier
-
-            const subcommand = commands[subcommandName] ?? commands[Case.camel(subcommandName)]
+            // const [subcommandName, commandName] = specifier
+            const [subcommandName, subcommand] = matcher(commands, specifier[0])
 
             if (isSubcommand(subcommand)) {
-                const command =
-                    subcommand.commands[commandName] ??
-                    subcommand.commands[Case.camel(commandName)]
+                const [commandName, command] = matcher(subcommand.commands, specifier[1])
 
                 if (isCommand(command)) {
                     return await response.replyEphemeral({
                         fallback,
-                        embeds: [generateCommandHelp(command, defaultEmbedData)],
+                        embeds: [
+                            generateCommandHelp(
+                                [subcommandName, commandName],
+                                command,
+                                request,
+                                defaultEmbedData,
+                            ),
+                        ],
                     })
                 }
 
@@ -244,7 +311,7 @@ export const help =
                     fallback,
                     content: `\`${commandName}\` is not a command`,
                     embeds: [
-                        generateTopLevelHelp(commands, {
+                        generateTopLevelHelp(commands, request, {
                             ...defaultEmbedData,
                             title: title || `Help for \`${username}\``,
                         }),
@@ -252,14 +319,22 @@ export const help =
                 })
             } else if (isSubcommandGroup(subcommand)) {
                 const subcommandGroup = subcommand
-                const subcommand1 =
-                    subcommandGroup.subcommands[commandName] ??
-                    subcommandGroup.subcommands[Case.camel(commandName)]
+                const [commandName, subcommand1] = matcher(
+                    subcommandGroup.subcommands,
+                    specifier[1],
+                )
 
                 if (isSubcommand(subcommand1)) {
                     return await response.replyEphemeral({
                         fallback,
-                        embeds: [generateSubcommandHelp(subcommand1, defaultEmbedData)],
+                        embeds: [
+                            generateSubcommandHelp(
+                                [subcommandName, commandName],
+                                subcommand1,
+                                request,
+                                defaultEmbedData,
+                            ),
+                        ],
                     })
                 }
 
@@ -267,7 +342,7 @@ export const help =
                     fallback,
                     content: `Error: \`${commandName}\` is not a subcommand`,
                     embeds: [
-                        generateSubcommandGroupHelp(subcommandGroup, {
+                        generateSubcommandGroupHelp([subcommandName], subcommandGroup, request, {
                             ...defaultEmbedData,
                             title: title || `Help for \`${subcommandName}\``,
                         }),
@@ -279,7 +354,7 @@ export const help =
                 fallback,
                 content: `Error: \`${subcommandName}\` was not found`,
                 embeds: [
-                    generateTopLevelHelp(commands, {
+                    generateTopLevelHelp(commands, request, {
                         ...defaultEmbedData,
                         title: title || `Help for \`${username}\``,
                     }),
@@ -287,22 +362,22 @@ export const help =
             })
         }
 
-        const entry = commands[specifier[0]] ?? commands[Case.camel(specifier[0])]
+        const [trueKey, entry] = matcher(commands, specifier[0])
 
         if (isCommand(entry)) {
             return await response.replyEphemeral({
                 fallback,
-                embeds: [generateCommandHelp(entry, defaultEmbedData)],
+                embeds: [generateCommandHelp([trueKey], entry, request, defaultEmbedData)],
             })
         } else if (isSubcommand(entry)) {
             return await response.replyEphemeral({
                 fallback,
-                embeds: [generateSubcommandHelp(entry, defaultEmbedData)],
+                embeds: [generateSubcommandHelp([trueKey], entry, request, defaultEmbedData)],
             })
         } else if (isSubcommandGroup(entry)) {
             return await response.replyEphemeral({
                 fallback,
-                embeds: [generateSubcommandGroupHelp(entry, defaultEmbedData)],
+                embeds: [generateSubcommandGroupHelp([trueKey], entry, request, defaultEmbedData)],
             })
         }
 
@@ -310,7 +385,7 @@ export const help =
             fallback,
             content: `Error: \`${specifier[0]}\` was not found`,
             embeds: [
-                generateTopLevelHelp(commands, {
+                generateTopLevelHelp(commands, request, {
                     ...defaultEmbedData,
                     title: title || `Help for \`${username}\``,
                 }),

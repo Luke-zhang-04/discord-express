@@ -12,7 +12,7 @@ export interface ClientOptions extends discord.ClientOptions {
     authToken?: string
 }
 
-export type CommandArray = [command: string, subcommandGroup?: string, subcommand?: string]
+export type CommandArray = [string, string?, string?]
 
 export type StackCommand =
     | {type: "command"; command: CommandArray[]; handler: DiscordExpressHandler}
