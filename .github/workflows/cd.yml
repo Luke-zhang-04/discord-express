@@ -16,7 +16,7 @@ jobs:
           version: 6.24.3
       - uses: actions/setup-node@v2
         with:
-          node-version: "14.x"
+          node-version: 16
           cache: pnpm
 
       - name: install deps
@@ -36,16 +36,21 @@ jobs:
     needs: build
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+          registry-url: "https://registry.npmjs.org"
 
       - uses: actions/download-artifact@v2
         with:
           name: dist
-          path: "."
+          path: dist
 
       - name: publish to NPM
-        # Don't fail if version already exists
-        run: pnpm publish --access public || echo "Version already published" && exit 0
+        working-directory: dist
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -74,7 +79,7 @@ jobs:
           version: 6.24.3
       - uses: actions/setup-node@v2
         with:
-          node-version: ${{ matrix.node }}
+          node-version: 16
           cache: pnpm
 
       - name: install deps
