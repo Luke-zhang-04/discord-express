@@ -1,14 +1,70 @@
 name: Deploy
 
 on:
-  push: {}
-  pull_request:
-    types: [opened, reopened]
+  release:
+    types: [published]
 
 jobs:
   build:
+    name: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 6.24.3
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+          cache: pnpm
+
+      - name: install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: build
+        run: pnpm build:prod
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: dist
+          path: dist
+
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: dist
+          path: "."
+
+      - name: publish to NPM
+        # Don't fail if version already exists
+        run: pnpm publish --access public || echo "Version already published" && exit 0
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: archive files
+        run: tar -czvf discord-express.tar.gz dist && zip -rv discord-express.zip dist
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ./discord-express.tar.gz
+            ./discord-express.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docs:
     name: generate docs
     runs-on: ubuntu-latest
+    needs: build
 
     steps:
       - name: Checkout Repo

@@ -1,20 +1,38 @@
 {
   "name": "discord-express",
-  "version": "0.0.0",
-  "description": "",
+  "version": "0.0.0-a1",
+  "description": "DiscordJS reimagined: seamlessly integrate slash and message commands with the pluggable, middleware-based Discord bot framework inspiried by ExpressJS. ",
   "license": "MIT",
-  "author": "",
-  "main": "lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Luke-zhang-04/DeStagnate"
+  },
+  "author": "Luke Zhang <luke_zhang_04@protonmail.com>",
+  "homepage": "https://github.com/Luke-zhang-04/discord-express#readme",
+  "bugs": {
+    "url": "https://github.com/Luke-zhang-04/DeStagnate/issues"
+  },
+  "main": "./cjs/index.js",
+  "module": "./index.js",
   "type": "module",
   "engines": {
     "node": ">=16.6"
   },
   "scripts": {
+    "build:prod": "./build.sh",
     "generateDocs": "typedoc --options typedoc.cjs",
     "lint": "eslint --ext ts src __mocks__ __tests__",
     "test": "node --experimental-vm-modules --es-module-specifier-resolution=node node_modules/jest/bin/jest.js"
   },
-  "keywords": [],
+  "keywords": [
+    "discord-js",
+    "discord-bot-framework",
+    "discord-js-framework",
+    "discord-js-v13",
+    "slash-commands-handler",
+    "message-commands",
+    "slash-commands"
+  ],
   "peerDependencies": {
     "@types/node": ">=12",
     "discord.js": "^13.6.0"
@@ -46,6 +64,7 @@
     "eslint": "^8.7.0",
     "eslint-plugin-prefer-arrow": "^1.2.3",
     "eslint-plugin-prettier": "^4.0.0",
+    "glob": "^7.2.0",
     "husky": "^7.0.4",
     "jest": "^27.4.7",
     "prettier": "^2.5.1",
