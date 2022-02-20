@@ -21,8 +21,11 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: pnpm
 
-      - name: Run Typedoc
-        run: "pnpm generateDocs"
+      - name: install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: run Typedoc
+        run: pnpm generateDocs
 
       - name: deploy
         uses: JamesIves/github-pages-deploy-action@4.1.0
