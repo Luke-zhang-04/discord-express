@@ -1,5 +1,5 @@
 <p align="center">
-    <img width="50%" src="media/train.png"/>
+    <img width="50%" src="https://github.com/Luke-zhang-04/discord-express/blob/master/media/train.png?raw=true"/>
 </p>
 
 # Discord Express
