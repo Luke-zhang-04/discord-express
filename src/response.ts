@@ -5,22 +5,55 @@ import {
     type MessageOptions,
 } from "discord.js"
 
+interface EphemeralMessageOptions extends Omit<MessageOptions, "reply" | "stickers"> {
+    /**
+     * Fallback in case an ephemeral reply is not possible
+     *
+     * - `dm`: reply via DM
+     * - `normal`: reply as a normal message
+     * - `skip`: don't reply at all
+     *
+     * @default 'normal'
+     */
+    fallback?: "dm" | "normal" | "skip"
+}
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 export abstract class BaseResponse {
+    /**
+     * Defer the reply. Only applicable to slash commands, and is needed if the response will take
+     * more than 3 seconds.
+     *
+     * @see https://discordjs.guide/interactions/replying-to-slash-commands.html#responding-to-a-command
+     */
     public abstract defer(): Promise<void>
+
+    /** Send a message to the channel of the request */
     public abstract send(
         options: string | Omit<MessageOptions, "reply" | "stickers">,
     ): Promise<Message | void>
+
+    /**
+     * Reply to the trigger. If this is an interaction, at least one of these is required for the
+     * interaction not to show a "failed" status.
+     */
     public abstract reply(
         options: string | Omit<MessageOptions, "reply" | "stickers">,
     ): Promise<Message | void>
+
+    /**
+     * If the trigger is an interaction, reply ephemerally (a temporary, dismissable message only
+     * the requester can see). Otherwise, reply using the specified fallback.
+     */
     public abstract replyEphemeral(
-        options:
-            | string
-            | (Omit<MessageOptions, "reply" | "stickers"> & {fallback?: "dm" | "normal" | "skip"}),
+        options: string | EphemeralMessageOptions,
     ): Promise<Message | void>
+
+    /** Edit the latest response. */
     public abstract edit(options: string | MessageEditOptions): Promise<Message | void>
+
+    /** Delete the latest response. */
     public abstract del(): Promise<Message | void>
 }
 
@@ -31,11 +64,12 @@ export class MessageResponse extends BaseResponse {
         super()
     }
 
-    // eslint-disable-next-line require-await
-    public async defer(): Promise<void> {
-        return
+    /** No-op: only applicable to interaction commands */
+    public defer(): Promise<void> {
+        return Promise.resolve()
     }
 
+    /** Send a message to the channel of the request */
     public async send(
         options: string | Omit<MessageOptions, "reply" | "stickers">,
     ): Promise<Message> {
@@ -46,6 +80,7 @@ export class MessageResponse extends BaseResponse {
         return message
     }
 
+    /** Reply to the message */
     public async reply(
         options: string | Omit<MessageOptions, "reply" | "stickers">,
     ): Promise<Message> {
@@ -56,10 +91,9 @@ export class MessageResponse extends BaseResponse {
         return message
     }
 
+    /** Reply using the specified fallback. */
     public async replyEphemeral(
-        options:
-            | string
-            | (Omit<MessageOptions, "reply" | "stickers"> & {fallback?: "dm" | "normal" | "skip"}),
+        options: string | EphemeralMessageOptions,
     ): Promise<Message | undefined> {
         if (typeof options === "string") {
             return await this.message.reply(options)
@@ -83,6 +117,7 @@ export class MessageResponse extends BaseResponse {
         return message
     }
 
+    /** Edit the latest message response */
     public async edit(options: string | MessageEditOptions): Promise<Message> {
         const message = await this._messages[this._messages.length - 1]!.edit(options)
 
@@ -91,6 +126,7 @@ export class MessageResponse extends BaseResponse {
         return message
     }
 
+    /** Delete the latest message response */
     public async del(): Promise<Message | undefined> {
         const message = this._messages[this._messages.length - 1]!
 
@@ -105,10 +141,16 @@ export class InteractionResponse extends BaseResponse {
         super()
     }
 
+    /**
+     * Defer the reply. This is needed if the response will take more than 3 seconds.
+     *
+     * @see https://discordjs.guide/interactions/replying-to-slash-commands.html#responding-to-a-command
+     */
     public async defer(): Promise<void> {
         return await this.interaction.deferReply()
     }
 
+    /** Send a message to the channel of the request */
     public async send(
         options: string | Omit<MessageOptions, "reply" | "stickers">,
     ): Promise<void> {
@@ -121,6 +163,10 @@ export class InteractionResponse extends BaseResponse {
         return
     }
 
+    /**
+     * Reply to the interaction. At least one of these is required for the interaction not to show
+     * a "failed" status.
+     */
     public async reply(
         options: string | Omit<MessageOptions, "reply" | "stickers">,
     ): Promise<void> {
@@ -129,11 +175,8 @@ export class InteractionResponse extends BaseResponse {
         return
     }
 
-    public async replyEphemeral(
-        options:
-            | string
-            | (Omit<MessageOptions, "reply" | "stickers"> & {fallback?: "dm" | "normal" | "skip"}),
-    ): Promise<void> {
+    /** Reply ephemerally (a temporary, dismissable message only the requester can see). */
+    public async replyEphemeral(options: string | EphemeralMessageOptions): Promise<void> {
         await this.interaction.reply({
             ...(typeof options === "string" ? {content: options} : options),
             ephemeral: true,
@@ -142,6 +185,7 @@ export class InteractionResponse extends BaseResponse {
         return
     }
 
+    /** Delete the latest response. */
     public async edit(options: string | MessageEditOptions): Promise<void> {
         await this.interaction.editReply(
             typeof options === "string"
@@ -155,6 +199,7 @@ export class InteractionResponse extends BaseResponse {
         return
     }
 
+    /** Delete the latest response. */
     public async del(): Promise<void> {
         await this.interaction.deleteReply()
 
@@ -162,7 +207,6 @@ export class InteractionResponse extends BaseResponse {
     }
 }
 
-// export {BaseResponse as Response}
 export type Response = MessageResponse | InteractionResponse
 
 export const createResponse = (

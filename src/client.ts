@@ -13,7 +13,8 @@ import {type Request, createRequest} from "./request"
 import fetch from "node-fetch"
 import {matchCommand} from "./commandMatcher"
 
-const inlineTryPromise = async <T>(func: () => Promise<T>): Promise<unknown> => {
+/** Inline try and promise but the return value of `func` is not returned but the error will be */
+const inlineTryPromise = async (func: () => Promise<unknown>): Promise<unknown> => {
     try {
         await func()
 
@@ -28,6 +29,11 @@ export interface ClientOptions extends discord.ClientOptions {
     authToken?: string
 }
 
+/**
+ * A command array stores the 3 parts of a command: the subcommand group, subcommand, and command.
+ * A command array acts more like a FIFO stack, where you can also have a subcommand and command,
+ * or just a command.
+ */
 export type CommandArray = [string, string?, string?]
 
 export type StackCommand =
@@ -51,7 +57,29 @@ type Ref<T> = {current?: T}
  * middleware-like command system
  */
 export class Client<Ready extends boolean = boolean> extends discord.Client<Ready> {
-    /** @alias interactionCommand */
+    /**
+     * Add slash (interaction) command handlers to the middleware chain
+     *
+     * Functionally equivalent to `interactionCommand`
+     *
+     * @remarks
+     * Using `slashCommand` does not restrict you from handling message commands later. Only, these
+     * specific handler(s) will only run if the request came from an slash command
+     * @example
+     *
+     * ```ts
+     * client.slashCommand("*") // Match all slash commands
+     * client.slashCommand("myCommand") // Match `myCommand`
+     * client.slashCommand("mySubcommand/*") // Match all commands under `mySubcommand` AND `my-subcommand`
+     *
+     * // Match `mySubcommandGroup mySubcommand myCommand` AND `my-subcommand-group my-subcommand my-command`
+     * client.slashCommand("mySubcommandGroup/mySubcommand/myCommand")
+     * ```
+     *
+     * @param commands - A command specifier, or array of command specifiers
+     * @param handlers - Handlers for this slash command
+     * @alias interactionCommand
+     */
     public slashCommand = this.interactioncommand
     private _stack: StackItem[] = []
 
@@ -97,7 +125,30 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
         return await response.json()
     }
 
+    /**
+     * Use middleware universally
+     *
+     * @param handlers - Middleware handlers
+     */
     public use(...handlers: DiscordExpressHandler[]): void
+
+    /**
+     * Use middleware for a specific route or command
+     *
+     * @example
+     *
+     * ```ts
+     * client.use("*") // Match all commands
+     * client.use("myCommand") // Match `myCommand`
+     * client.use("mySubcommand/*") // Match all commands under `mySubcommand` AND `my-subcommand`
+     *
+     * // Match `mySubcommandGroup mySubcommand myCommand` AND `my-subcommand-group my-subcommand my-command`
+     * client.use("mySubcommandGroup/mySubcommand/myCommand")
+     * ```
+     *
+     * @param routes - A command specifier, or array of command specifiers
+     * @param handlers - Middleware handlers
+     */
     public use(routes: string | string[], ...handlers: DiscordExpressHandler[]): void
 
     public use(
@@ -113,10 +164,47 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
         }
     }
 
+    /**
+     * Add command handlers to the middleware chain
+     *
+     * @example
+     *
+     * ```ts
+     * client.command("*") // Match all commands
+     * client.command("myCommand") // Match `myCommand`
+     * client.command("mySubcommand/*") // Match all commands under `mySubcommand` AND `my-subcommand`
+     *
+     * // Match `mySubcommandGroup mySubcommand myCommand` AND `my-subcommand-group my-subcommand my-command`
+     * client.command("mySubcommandGroup/mySubcommand/myCommand")
+     * ```
+     *
+     * @param commands - A command specifier, or array of command specifiers
+     * @param handlers - Handlers for this command
+     */
     public command(commands: string | string[], ...handlers: DiscordExpressHandler[]): void {
         this._addItem("command", commands, handlers)
     }
 
+    /**
+     * Add message command handlers to the middleware chain
+     *
+     * @remarks
+     * Using `messageCommand` does not restrict you from handling interaction commands later. Only,
+     * these specific handler(s) will only run if the request came from a message command
+     * @example
+     *
+     * ```ts
+     * client.messageCommand("*") // Match all message commands
+     * client.messageCommand("myCommand") // Match `myCommand`
+     * client.messageCommand("mySubcommand/*") // Match all commands under `mySubcommand` AND `my-subcommand`
+     *
+     * // Match `mySubcommandGroup mySubcommand myCommand` AND `my-subcommand-group my-subcommand my-command`
+     * client.messageCommand("mySubcommandGroup/mySubcommand/myCommand")
+     * ```
+     *
+     * @param commands - A command specifier, or array of command specifiers
+     * @param handlers - Handlers for this message command
+     */
     public messageCommand(
         commands: string | string[],
         ...handlers: DiscordExpressMessageHandler[]
@@ -124,6 +212,26 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
         this._addItem("messageCommand", commands, handlers)
     }
 
+    /**
+     * Add interaction command handlers to the middleware chain
+     *
+     * @remarks
+     * Using `interactionCommand` does not restrict you from handling message commands later. Only,
+     * these specific handler(s) will only run if the request came from an interaction command
+     * @example
+     *
+     * ```ts
+     * client.interactionCommand("*") // Match all interaction commands
+     * client.interactionCommand("myCommand") // Match `myCommand`
+     * client.interactionCommand("mySubcommand/*") // Match all commands under `mySubcommand` AND `my-subcommand`
+     *
+     * // Match `mySubcommandGroup mySubcommand myCommand` AND `my-subcommand-group my-subcommand my-command`
+     * client.interactionCommand("mySubcommandGroup/mySubcommand/myCommand")
+     * ```
+     *
+     * @param commands - A command specifier, or array of command specifiers
+     * @param handlers - Handlers for this interaction command
+     */
     public interactioncommand(
         commands: string | string[],
         ...handlers: DiscordExpressInteractionCommandHandler[]
@@ -131,7 +239,25 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
         this._addItem("interactionCommand", commands, handlers)
     }
 
+    /**
+     * Handle any errors that may arise from the middleware chain
+     *
+     * @remarks
+     * Only errors that occur *BEFORE* these handler(s) are defined will be handled. It is common
+     * practice to place error handlers at the very end of the middleware chain.
+     * @param handlers - Middleware handlers
+     */
     public error(...handlers: DiscordExpressErrorHandler[]): void
+
+    /**
+     * Handle errors in `routes` that may arise from the middleware chain
+     *
+     * @remarks
+     * Only errors that occur *BEFORE* these handler(s) are defined will be handled. It is common
+     * practice to place error handlers at the very end of the middleware chain.
+     * @param routes - A command specifier, or array of command specifiers
+     * @param handlers - Middleware handlers
+     */
     public error(routes: string | string[], ...handlers: DiscordExpressErrorHandler[]): void
 
     public error(
@@ -147,11 +273,16 @@ export class Client<Ready extends boolean = boolean> extends discord.Client<Read
         }
     }
 
+    /**
+     * Initialize the express portion of the client by adding event listeners to the
+     * `messageCreate` and `interactionCreate` events
+     */
     public initExpress(): void {
         this.on("messageCreate", this.applyStack)
         this.on("interactionCreate", this.applyStack)
     }
 
+    /** Apply the router stack AKA middleware chain to the trigger. Normally, you shouldn't have to use this. */
     public async applyStack(trigger: discord.Message | discord.Interaction): Promise<void> {
         if (trigger instanceof discord.Interaction) {
             if (!trigger.isCommand() || trigger.user.id === this.user?.id) {

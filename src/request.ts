@@ -118,6 +118,9 @@ export class MessageRequest<Body = unknown> extends BaseRequest<Body> {
     public override readonly trigger: Message
     public override body: Body
 
+    public readonly isMessageRequest = true
+    public readonly isInteractionRequest = false
+
     public constructor(public override readonly message: Message) {
         super(message)
 
@@ -145,6 +148,9 @@ export class InteractionRequest<Body = unknown> extends BaseRequest<Body> {
     /** What triggered the command. In this case, it's a command interaction */
     public override readonly trigger: CommandInteraction
     public override body: Body
+
+    public readonly isMessageRequest = false
+    public readonly isInteractionRequest = true
 
     public constructor(public override readonly interaction: CommandInteraction) {
         super(interaction)
