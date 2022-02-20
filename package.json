@@ -21,7 +21,7 @@
   "scripts": {
     "build:prod": "./build.sh",
     "generateDocs": "typedoc --options typedoc.cjs",
-    "lint": "eslint --ext ts src __mocks__ __tests__",
+    "lint": "eslint --ext ts src __mocks__ __tests__ --max-warnings 0",
     "test": "node --experimental-vm-modules --es-module-specifier-resolution=node node_modules/jest/bin/jest.js"
   },
   "keywords": [

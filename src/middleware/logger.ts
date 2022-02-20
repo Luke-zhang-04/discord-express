@@ -84,8 +84,8 @@ const formats = {
 export type Formats = typeof formats
 
 const formatString = (request: Request, str: string): string =>
-    str.replace(/:[a-zA-Z]+/gu, (str): string => {
-        const key = str.slice(1) // Remove colon
+    str.replace(/:[a-zA-Z]+/gu, (param): string => {
+        const key = param.slice(1) // Remove colon
 
         return key in tokens ? tokens[key as keyof typeof tokens](request) : str
     })
