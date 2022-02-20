@@ -293,8 +293,8 @@ export class MockDiscord {
     public mockUser(options: Partial<APIUser> = {}): User {
         const data: APIUser = {
             id: randomTimestamp().toString(),
-            username: "user username",
-            discriminator: "user#0000",
+            username: "username",
+            discriminator: "0000",
             avatar: "user avatar url",
             bot: false,
             ...options,

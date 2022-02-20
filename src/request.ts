@@ -35,6 +35,7 @@ export abstract class BaseRequest<Body = unknown> {
     public readonly guild: Guild | null
     public readonly guildId: string | null
     public readonly id: string
+    public readonly startAt = new Date()
 
     /**
      * Command details. Note that for message commands, positional arguments are inserted even if
