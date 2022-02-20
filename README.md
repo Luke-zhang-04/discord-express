@@ -39,9 +39,9 @@ Requirements: node >= 16.6
 **Javascript**:
 
 ```sh
-npm i discord.js discord-express
-yarn add discord.js discord-express
-pnpm add discord.js discord-express
+npm i discord.js discord-express dotenv
+yarn add discord.js discord-express dotenv
+pnpm add discord.js discord-express dotenv
 ```
 
 **Typescript**:
