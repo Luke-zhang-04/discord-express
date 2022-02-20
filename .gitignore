@@ -136,3 +136,4 @@ tsBuildInfo
 .env.development
 .env.testing
 .env
+docs
