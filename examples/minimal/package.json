@@ -1,0 +1,15 @@
+{
+  "name": "minimal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A barebones example bot made with discord-express",
+  "license": "0BSD",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node --experimental-vm-modules --es-module-specifier-resolution=node src/index.js"
+  },
+  "dependencies": {
+    "discord-express": "link:../../dist"
+  }
+}

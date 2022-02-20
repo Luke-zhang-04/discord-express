@@ -36,6 +36,8 @@ There is still boilerplate associated with creating a bot. This will get you sta
 
 Requirements: node >= 16.6
 
+More comprehensive examples are available at [examples](https://github.com/Luke-zhang-04/discord-express/tree/master/examples)
+
 **Javascript**:
 
 ```sh
@@ -53,16 +55,13 @@ pnpm add @types/node
 ```
 
 ```js
-import {Client, builtins, createCommands, middleware} from "./lib"
+import {Client, builtins, createCommands, middleware} from "discord-express"
 import dotenv from "dotenv"
 
 dotenv.config()
 
 /** @type {import("discord-express").Commands} */
 const commands = {
-    echo: {
-        description: `Echo a message`,
-    },
     help: builtins.help.command,
 }
 
@@ -77,16 +76,6 @@ client.initExpress()
 client.use(...middleware.recommended())
 client.use(middleware.messageCommandParser({prefix: "~"}))
 client.command("help", builtins.help.handler({commands}))
-
-client.command("echo", (request, response) => {
-    console.log(request.body)
-
-    if (request.requestType === "interaction") {
-        response.reply(request.body.content)
-    } else {
-        response.reply(request.body._.join(" "))
-    }
-})
 
 client.on("ready", () => {
     console.log("ready")
